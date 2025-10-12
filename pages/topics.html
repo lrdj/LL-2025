@@ -5,49 +5,146 @@ permalink: /topics/
 ---
 
 <div class="topics-intro">
-  <p>Explore {{ site.data.topics.size | number_with_delimiter }} topics organized into {{ site.data.supercategories.size }} main categories.</p>
+  <p id="topic-count">Loading topics...</p>
 </div>
 
-<div class="topics-by-category">
-  {% for category in site.data.supercategories %}
-  {% assign category_topics = site.data.topics | where: "supercategory", category.slug | sort: "name" %}
-  
-  {% if category_topics.size > 0 %}
-  <section class="topic-category">
-    <h2 class="topic-category-title" style="color: {{ category.color }}">
-      {{ category.name }}
-      <span class="topic-count">({{ category_topics.size }} topics)</span>
-    </h2>
-    
-    <div class="topic-cloud">
-      {% for topic in category_topics limit:50 %}
-      <a href="{{ '/topics/' | append: topic.path | relative_url }}" class="topic-tag" style="--category-color: {{ category.color }}">
-        {{ topic.name }}
-      </a>
-      {% endfor %}
-      
-      {% if category_topics.size > 50 %}
-      <button class="show-more-topics" data-category="{{ category.slug }}">
-        Show all {{ category_topics.size }} topics →
-      </button>
-      {% endif %}
-    </div>
-  </section>
-  {% endif %}
-  {% endfor %}
+<div id="topics-by-category" class="topics-by-category">
+  <p>Loading topics...</p>
 </div>
 
 <script>
-// Show more topics functionality
-document.querySelectorAll('.show-more-topics').forEach(button => {
-  button.addEventListener('click', function() {
-    const category = this.dataset.category;
-    const topicCloud = this.previousElementSibling;
+// Load and display topics
+(function() {
+  const topicsContainer = document.getElementById('topics-by-category');
+  const topicCount = document.getElementById('topic-count');
+  
+  const supercategories = [
+    { slug: 'science', name: 'Science' },
+    { slug: 'arts', name: 'Arts' },
+    { slug: 'politics', name: 'Politics' },
+    { slug: 'business', name: 'Business' },
+    { slug: 'music', name: 'Music' },
+    { slug: 'religion', name: 'Religion' },
+    { slug: 'academic', name: 'Academic' },
+    { slug: 'sport', name: 'Sport' },
+    { slug: 'society', name: 'Society' },
+    { slug: 'children', name: 'Children' },
+    { slug: 'leisure', name: 'Leisure' }
+  ];
+  
+  // Load topics from JSON
+  fetch('{{ site.baseurl }}/assets/data/topics.json')
+    .then(response => response.json())
+    .then(topics => {
+      topicCount.textContent = `Explore ${topics.length.toLocaleString()} topics organized by category.`;
+      renderTopics(topics);
+    })
+    .catch(error => {
+      console.error('Error loading topics:', error);
+      topicsContainer.innerHTML = '<p>Error loading topics. Please refresh the page.</p>';
+    });
+  
+  function renderTopics(topics) {
+    // Group topics by supercategory
+    const byCategory = {};
     
-    // In a real implementation, you'd load more topics here
-    // For now, just hide the button
-    this.style.display = 'none';
-  });
-});
+    topics.forEach(topic => {
+      // Determine supercategory from path
+      const pathParts = topic.path.split('/').filter(p => p);
+      const category = pathParts[0] || 'other';
+      
+      if (!byCategory[category]) {
+        byCategory[category] = [];
+      }
+      
+      // Only show top-level topics (2 levels deep)
+      if (pathParts.length <= 2) {
+        byCategory[category].push(topic);
+      }
+    });
+    
+    // Render by supercategory order
+    const html = supercategories.map(supercat => {
+      const categoryTopics = (byCategory[supercat.slug] || [])
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, 50); // Limit to 50 per category for performance
+      
+      if (categoryTopics.length === 0) return '';
+      
+      return `
+        <section class="topic-category">
+          <h2 class="topic-category-title" style="color: var(--color-${supercat.slug});">
+            ${supercat.name}
+            <span class="topic-count">(${categoryTopics.length}${byCategory[supercat.slug].length > 50 ? '+' : ''})</span>
+          </h2>
+          <div class="topic-list">
+            ${categoryTopics.map(topic => `
+              <a href="{{ site.baseurl }}/topics${topic.path}/" class="topic-link">
+                ${topic.name}
+              </a>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }).join('');
+    
+    topicsContainer.innerHTML = html || '<p>No topics found.</p>';
+  }
+})();
 </script>
+
+<style>
+.topics-intro {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.topics-by-category {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.topic-category {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.topic-category-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.topic-count {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text-light);
+}
+
+.topic-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.topic-link {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.topic-link:hover {
+  background: var(--color-science);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+</style>
 

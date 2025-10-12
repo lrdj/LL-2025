@@ -9,9 +9,17 @@ permalink: /browse/
     <label for="category-filter">Category:</label>
     <select id="category-filter" class="filter-select">
       <option value="">All Categories</option>
-      {% for category in site.data.supercategories %}
-      <option value="{{ category.slug }}">{{ category.name }}</option>
-      {% endfor %}
+      <option value="science">Science</option>
+      <option value="arts">Arts</option>
+      <option value="politics">Politics</option>
+      <option value="business">Business</option>
+      <option value="music">Music</option>
+      <option value="religion">Religion</option>
+      <option value="academic">Academic</option>
+      <option value="sport">Sport</option>
+      <option value="society">Society</option>
+      <option value="children">Children</option>
+      <option value="leisure">Leisure</option>
     </select>
   </div>
   
@@ -26,25 +34,23 @@ permalink: /browse/
   </div>
   
   <div class="results-count">
-    Showing <span id="results-count">{{ site.data.lectures.size }}</span> lectures
+    Showing <span id="results-count">Loading...</span> lectures
   </div>
 </div>
 
 <div id="lecture-list" class="lecture-grid">
-  {% for lecture in site.data.lectures limit:24 %}
-    {% include lecture-card.html lecture=lecture %}
-  {% endfor %}
+  <p>Loading lectures...</p>
 </div>
 
-<div class="pagination">
+<div class="pagination" style="display: none;">
   <button id="load-more" class="btn btn-primary">Load More</button>
 </div>
 
 <script>
 // Client-side filtering and pagination
 (function() {
-  const lectures = {{ site.data.lectures | jsonify }};
-  let filteredLectures = [...lectures];
+  let lectures = [];
+  let filteredLectures = [];
   let displayedCount = 24;
   
   const categoryFilter = document.getElementById('category-filter');
@@ -52,6 +58,20 @@ permalink: /browse/
   const lectureList = document.getElementById('lecture-list');
   const resultsCount = document.getElementById('results-count');
   const loadMoreBtn = document.getElementById('load-more');
+  const pagination = document.querySelector('.pagination');
+  
+  // Load lectures from JSON
+  fetch('{{ site.baseurl }}/assets/data/lectures.json')
+    .then(response => response.json())
+    .then(data => {
+      lectures = data;
+      filteredLectures = [...lectures];
+      filterLectures();
+    })
+    .catch(error => {
+      console.error('Error loading lectures:', error);
+      lectureList.innerHTML = '<p>Error loading lectures. Please refresh the page.</p>';
+    });
   
   function filterLectures() {
     const category = categoryFilter.value;
@@ -70,9 +90,9 @@ permalink: /browse/
     filteredLectures.sort((a, b) => {
       switch(sortBy) {
         case 'date-desc':
-          return (b.added || '').localeCompare(a.added || '');
+          return new Date(b.added) - new Date(a.added);
         case 'date-asc':
-          return (a.added || '').localeCompare(b.added || '');
+          return new Date(a.added) - new Date(b.added);
         case 'title-asc':
           return a.title.localeCompare(b.title);
         case 'title-desc':
@@ -87,14 +107,21 @@ permalink: /browse/
   }
   
   function renderLectures() {
-    const toDisplay = filteredLectures.slice(0, displayedCount);
+    const toShow = filteredLectures.slice(0, displayedCount);
     
-    lectureList.innerHTML = toDisplay.map(lecture => {
-      const speakers = lecture.speakers.slice(0, 2).map(s => s.name).join(', ');
-      const moreCount = lecture.speakers.length > 2 ? ` +${lecture.speakers.length - 2} more` : '';
+    if (toShow.length === 0) {
+      lectureList.innerHTML = '<p>No lectures found matching your filters.</p>';
+      pagination.style.display = 'none';
+      resultsCount.textContent = '0';
+      return;
+    }
+    
+    lectureList.innerHTML = toShow.map(lecture => {
+      const speakers = lecture.speakers.slice(0, 3).map(s => s.name).join(', ');
+      const moreCount = lecture.speakers.length > 3 ? ` +${lecture.speakers.length - 3} more` : '';
       
       return `
-        <article class="lecture-card">
+        <div class="lecture-card">
           <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
             <span class="lecture-card-category">${lecture.supercategory}</span>
           </div>
@@ -105,25 +132,87 @@ permalink: /browse/
             ${speakers ? `<div class="lecture-card-speakers">${speakers}${moreCount}</div>` : ''}
             ${lecture.synopsis ? `<p class="lecture-card-synopsis">${lecture.synopsis.substring(0, 150)}...</p>` : ''}
             <div class="lecture-card-meta">
-              ${lecture.added ? `<time>${new Date(lecture.added).toLocaleDateString('en-GB', {month: 'short', year: 'numeric'})}</time>` : ''}
-              ${lecture.duration ? `<span class="lecture-duration">${lecture.duration} min</span>` : ''}
+              <span>${new Date(lecture.added).toLocaleDateString()}</span>
             </div>
           </div>
-        </article>
+        </div>
       `;
     }).join('');
     
     resultsCount.textContent = filteredLectures.length;
-    loadMoreBtn.style.display = displayedCount >= filteredLectures.length ? 'none' : 'block';
+    
+    if (displayedCount < filteredLectures.length) {
+      pagination.style.display = 'block';
+    } else {
+      pagination.style.display = 'none';
+    }
+  }
+  
+  function loadMore() {
+    displayedCount += 24;
+    renderLectures();
   }
   
   categoryFilter.addEventListener('change', filterLectures);
   sortSelect.addEventListener('change', sortLectures);
-  
-  loadMoreBtn.addEventListener('click', () => {
-    displayedCount += 24;
-    renderLectures();
-  });
+  loadMoreBtn.addEventListener('click', loadMore);
 })();
 </script>
+
+<style>
+.browse-controls {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--border-radius);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filter-group label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.results-count {
+  margin-left: auto;
+  color: var(--color-text-light);
+}
+
+.pagination {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .browse-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .results-count {
+    margin-left: 0;
+  }
+}
+</style>
 

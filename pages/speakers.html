@@ -5,7 +5,7 @@ permalink: /speakers/
 ---
 
 <div class="speakers-intro">
-  <p>Browse {{ site.data.speakers.size | number_with_delimiter }} speakers who have given lectures in our archive.</p>
+  <p id="speaker-count">Loading speakers...</p>
 </div>
 
 <div class="speakers-search">
@@ -20,49 +20,80 @@ permalink: /speakers/
 </div>
 
 <div id="speakers-list" class="speakers-list">
-  {% assign speakers_by_letter = site.data.speakers | group_by_exp: "speaker", "speaker.name | slice: 0 | upcase" | sort: "name" %}
-  
-  {% for group in speakers_by_letter %}
-  <section class="speaker-group" id="{{ group.name }}">
-    <h2 class="speaker-group-letter">{{ group.name }}</h2>
-    
-    <div class="speaker-items">
-      {% for speaker in group.items | sort: "name" %}
-      <div class="speaker-item">
-        <h3 class="speaker-name">
-          <a href="{{ '/speakers/' | append: speaker.slug | relative_url }}">
-            {{ speaker.name }}
-          </a>
-        </h3>
-        {% if speaker.bio %}
-        <p class="speaker-bio-preview">{{ speaker.bio | strip_html | truncate: 120 }}</p>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-  {% endfor %}
+  <p>Loading speakers...</p>
 </div>
 
 <script>
-// Speaker search
+// Load and display speakers
 (function() {
-  const searchInput = document.getElementById('speaker-search');
-  const speakers = {{ site.data.speakers | jsonify }};
-  const speakersList = document.getElementById('speakers-list');
+  let allSpeakers = [];
   
+  const searchInput = document.getElementById('speaker-search');
+  const speakersList = document.getElementById('speakers-list');
+  const speakerCount = document.getElementById('speaker-count');
+  
+  // Load speakers from JSON
+  fetch('{{ site.baseurl }}/assets/data/speakers.json')
+    .then(response => response.json())
+    .then(speakers => {
+      allSpeakers = speakers.sort((a, b) => a.name.localeCompare(b.name));
+      speakerCount.textContent = `Browse ${speakers.length.toLocaleString()} speakers who have given lectures in our archive.`;
+      renderSpeakers(allSpeakers);
+    })
+    .catch(error => {
+      console.error('Error loading speakers:', error);
+      speakersList.innerHTML = '<p>Error loading speakers. Please refresh the page.</p>';
+    });
+  
+  function renderSpeakers(speakers) {
+    // Group by first letter
+    const grouped = speakers.reduce((acc, speaker) => {
+      const letter = speaker.name.charAt(0).toUpperCase();
+      if (!acc[letter]) acc[letter] = [];
+      acc[letter].push(speaker);
+      return acc;
+    }, {});
+    
+    const html = Object.keys(grouped).sort().map(letter => {
+      const speakersInGroup = grouped[letter];
+      return `
+        <section class="speaker-group" id="${letter}">
+          <h2 class="speaker-group-letter">${letter}</h2>
+          <div class="speaker-items">
+            ${speakersInGroup.map(speaker => `
+              <div class="speaker-item">
+                <h3 class="speaker-name">
+                  <a href="{{ site.baseurl }}/speakers/${speaker.slug}/">${speaker.name}</a>
+                </h3>
+                ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }).join('');
+    
+    speakersList.innerHTML = html;
+  }
+  
+  // Search functionality
   searchInput.addEventListener('input', function() {
-    const query = this.value.toLowerCase();
+    const query = this.value.toLowerCase().trim();
     
     if (!query) {
-      // Show all speakers grouped by letter
-      location.reload();
+      renderSpeakers(allSpeakers);
       return;
     }
     
-    const filtered = speakers.filter(s => 
-      s.name.toLowerCase().includes(query)
+    const filtered = allSpeakers.filter(s => 
+      s.name.toLowerCase().includes(query) ||
+      (s.bio && s.bio.toLowerCase().includes(query))
     );
+    
+    if (filtered.length === 0) {
+      speakersList.innerHTML = '<p>No speakers found matching your search.</p>';
+      return;
+    }
     
     speakersList.innerHTML = `
       <div class="speaker-items">
@@ -75,9 +106,110 @@ permalink: /speakers/
           </div>
         `).join('')}
       </div>
-      ${filtered.length === 0 ? '<p>No speakers found.</p>' : ''}
     `;
   });
 })();
 </script>
+
+<style>
+.speakers-intro {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.speakers-search {
+  max-width: 600px;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-science);
+}
+
+.alphabet-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--border-radius);
+}
+
+.alphabet-link {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.alphabet-link:hover {
+  background: var(--color-science);
+  color: white;
+}
+
+.speaker-group {
+  margin-bottom: var(--spacing-xl);
+}
+
+.speaker-group-letter {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-science);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.speaker-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.speaker-item {
+  padding: var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+}
+
+.speaker-item:hover {
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.speaker-name {
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.speaker-name a {
+  color: var(--color-text);
+}
+
+.speaker-name a:hover {
+  color: var(--color-science);
+}
+
+.speaker-bio-preview {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  line-height: 1.5;
+}
+</style>
 

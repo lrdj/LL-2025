@@ -1,77 +1,178 @@
 ---
 layout: default
-title: Home
 ---
 
-<div class="hero">
+<!-- Hero Section -->
+<section class="hero">
   <div class="container">
     <h1 class="hero-title">The Lecture List</h1>
-    <p class="hero-subtitle">Discover {{ site.data.summary.total_lectures | number_with_delimiter }} public lectures from across the UK</p>
-    <p class="hero-description">An archive of talks on science, arts, politics, and more from 2003-2018</p>
-    
+    <p class="hero-subtitle">A Curated Archive of Public Lectures</p>
+    <p class="hero-description">
+      Discover talks on science, arts, politics, and more from leading thinkers across the UK (2003-2018)
+    </p>
     <div class="hero-search">
-      <input type="search" id="search-input" placeholder="Search lectures, speakers, or topics..." class="search-input">
-      <button class="search-button">Search</button>
-    </div>
-  </div>
-</div>
-
-<section class="supercategories">
-  <div class="container">
-    <h2 class="section-title">Browse by Category</h2>
-    
-    <div class="category-grid">
-      {% for category in site.data.supercategories %}
-      {% assign count = site.data.summary.by_supercategory[category.slug] | default: 0 %}
-      <a href="{{ '/browse/' | append: category.slug | append: '/' | relative_url }}" class="category-card" style="--category-color: {{ category.color }}">
-        <div class="category-image">
-          <img src="{{ '/assets/images/supercategories/' | append: category.image | relative_url }}" alt="{{ category.name }}">
-        </div>
-        <div class="category-content">
-          <h3 class="category-name">{{ category.name }}</h3>
-          <p class="category-count">{{ count }} lectures</p>
-        </div>
-      </a>
-      {% endfor %}
+      <input type="search" placeholder="Search lectures..." class="search-input">
+      <button class="search-button" onclick="window.location.href='{{ '/search/' | relative_url }}'">Search</button>
     </div>
   </div>
 </section>
 
-<section class="recent-lectures">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Recent Lectures</h2>
-      <a href="{{ '/browse/' | relative_url }}" class="section-link">View all →</a>
-    </div>
-    
-    <div class="lecture-grid">
-      {% for lecture in site.data.lectures limit:12 %}
-        {% include lecture-card.html lecture=lecture %}
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
+<!-- Statistics -->
 <section class="stats">
   <div class="container">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-number">{{ site.data.summary.total_lectures | number_with_delimiter }}</div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat">
+        <div class="stat-number" id="lecture-count">15,847</div>
         <div class="stat-label">Lectures</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-number">{{ site.data.summary.total_speakers | number_with_delimiter }}</div>
+      <div class="stat">
+        <div class="stat-number" id="speaker-count">16,912</div>
         <div class="stat-label">Speakers</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-number">{{ site.data.summary.total_topics | number_with_delimiter }}</div>
+      <div class="stat">
+        <div class="stat-number" id="topic-count">4,463</div>
         <div class="stat-label">Topics</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-number">{{ site.data.summary.total_institutions | number_with_delimiter }}</div>
+      <div class="stat">
+        <div class="stat-number" id="institution-count">3,459</div>
         <div class="stat-label">Institutions</div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Supercategories -->
+<section class="supercategories">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Browse by Category</h2>
+      <a href="{{ '/browse/' | relative_url }}" class="section-link">View All →</a>
+    </div>
+    
+    <div class="category-grid" id="category-grid">
+      <!-- Categories will be loaded here -->
+      <p>Loading categories...</p>
+    </div>
+  </div>
+</section>
+
+<!-- Recent Lectures -->
+<section class="recent-lectures">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Recently Added</h2>
+      <a href="{{ '/browse/' | relative_url }}" class="section-link">Browse All →</a>
+    </div>
+    
+    <div class="lecture-grid" id="recent-lectures">
+      <p>Loading lectures...</p>
+    </div>
+  </div>
+</section>
+
+<script>
+// Load summary data and recent lectures
+(function() {
+  const categories = [
+    { slug: 'science', name: 'Science', count: 0 },
+    { slug: 'arts', name: 'Arts', count: 0 },
+    { slug: 'politics', name: 'Politics', count: 0 },
+    { slug: 'business', name: 'Business', count: 0 },
+    { slug: 'music', name: 'Music', count: 0 },
+    { slug: 'religion', name: 'Religion', count: 0 },
+    { slug: 'academic', name: 'Academic', count: 0 },
+    { slug: 'sport', name: 'Sport', count: 0 },
+    { slug: 'society', name: 'Society', count: 0 },
+    { slug: 'children', name: 'Children', count: 0 },
+    { slug: 'leisure', name: 'Leisure', count: 0 }
+  ];
+  
+  // Load summary stats
+  fetch('{{ site.baseurl }}/assets/data/summary.json')
+    .then(response => response.json())
+    .then(summary => {
+      document.getElementById('lecture-count').textContent = summary.total_lectures.toLocaleString();
+      document.getElementById('speaker-count').textContent = summary.total_speakers.toLocaleString();
+      document.getElementById('topic-count').textContent = summary.total_topics.toLocaleString();
+      document.getElementById('institution-count').textContent = summary.total_institutions.toLocaleString();
+      
+      // Update category counts
+      if (summary.by_supercategory) {
+        categories.forEach(cat => {
+          const data = summary.by_supercategory.find(s => s.supercategory === cat.slug);
+          if (data) cat.count = data.count;
+        });
+      }
+      
+      renderCategories();
+    })
+    .catch(error => console.error('Error loading summary:', error));
+  
+  // Load recent lectures
+  fetch('{{ site.baseurl }}/assets/data/lectures.json')
+    .then(response => response.json())
+    .then(lectures => {
+      const recent = lectures
+        .sort((a, b) => new Date(b.added) - new Date(a.added))
+        .slice(0, 6);
+      
+      renderRecentLectures(recent);
+    })
+    .catch(error => {
+      console.error('Error loading lectures:', error);
+      document.getElementById('recent-lectures').innerHTML = '<p>Error loading lectures.</p>';
+    });
+  
+  function renderCategories() {
+    const html = categories.map(cat => `
+      <a href="{{ site.baseurl }}/browse/?category=${cat.slug}" class="category-card">
+        <div class="category-image">
+          <img src="{{ site.baseurl }}/assets/images/supercategories/${cat.slug}.png" 
+               alt="${cat.name}"
+               onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, var(--color-${cat.slug}), var(--color-${cat.slug}-light))';">
+        </div>
+        <div class="category-content">
+          <h3 class="category-name">${cat.name}</h3>
+          <p class="category-count">${cat.count > 0 ? cat.count.toLocaleString() + ' lectures' : 'View lectures'}</p>
+        </div>
+      </a>
+    `).join('');
+    
+    document.getElementById('category-grid').innerHTML = html;
+  }
+  
+  function renderRecentLectures(lectures) {
+    const html = lectures.map(lecture => {
+      const speakers = lecture.speakers.slice(0, 2).map(s => s.name).join(', ');
+      const moreCount = lecture.speakers.length > 2 ? ` +${lecture.speakers.length - 2}` : '';
+      
+      return `
+        <div class="lecture-card">
+          <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
+            <span class="lecture-card-category">${lecture.supercategory}</span>
+          </div>
+          <div class="lecture-card-content">
+            <h3 class="lecture-card-title">
+              <a href="{{ site.baseurl }}/lectures/${lecture.slug}/">${lecture.title}</a>
+            </h3>
+            ${speakers ? `<div class="lecture-card-speakers">${speakers}${moreCount}</div>` : ''}
+            ${lecture.synopsis ? `<p class="lecture-card-synopsis">${lecture.synopsis.substring(0, 120)}...</p>` : ''}
+            <div class="lecture-card-meta">
+              <span>${new Date(lecture.added).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('recent-lectures').innerHTML = html;
+  }
+})();
+</script>
+
+<style>
+.recent-lectures {
+  padding: var(--spacing-xxl) 0;
+}
+</style>
 
