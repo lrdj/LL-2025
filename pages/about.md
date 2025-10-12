@@ -4,9 +4,9 @@ title: About The Lecture List
 permalink: /about/
 ---
 
-## A Living Archive of Public Intellectual Life
+## A living archive of public intellectual life
 
-The Lecture List is a curated archive of **{{ site.data.summary.total_lectures | number_with_delimiter }} public lectures** delivered across the United Kingdom between 2003 and 2018.
+The Lecture List is a curated archive of **<span id="lecture-count">15,847</span> public lectures** delivered across the United Kingdom between 2003 and 2018.
 
 ### What You'll Find Here
 
