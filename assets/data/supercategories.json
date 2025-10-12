@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "science",
+    "name": "Science",
+    "color": "#4A90E2",
+    "image": "science.png"
+  },
+  {
+    "slug": "arts",
+    "name": "Arts",
+    "color": "#D4A574",
+    "image": "arts.png"
+  },
+  {
+    "slug": "politics",
+    "name": "Politics",
+    "color": "#8B4C4C",
+    "image": "politics.png"
+  },
+  {
+    "slug": "business",
+    "name": "Business",
+    "color": "#3D3D3D",
+    "image": "business.png"
+  },
+  {
+    "slug": "music",
+    "name": "Music",
+    "color": "#7B2D3E",
+    "image": "music.png"
+  },
+  {
+    "slug": "religion",
+    "name": "Religion",
+    "color": "#5B3A7D",
+    "image": "religion.png"
+  },
+  {
+    "slug": "academic",
+    "name": "Academic",
+    "color": "#002147",
+    "image": "academic.png"
+  },
+  {
+    "slug": "sport",
+    "name": "Sport",
+    "color": "#C93D3D",
+    "image": "sport.png"
+  },
+  {
+    "slug": "society",
+    "name": "Society",
+    "color": "#A67C52",
+    "image": "society.png"
+  },
+  {
+    "slug": "children",
+    "name": "Children",
+    "color": "#FFD166",
+    "image": "children.png"
+  },
+  {
+    "slug": "leisure",
+    "name": "Leisure",
+    "color": "#B8C5B8",
+    "image": "leisure.png"
+  }
+]
