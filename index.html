@@ -96,13 +96,15 @@ layout: default
       document.getElementById('topic-count').textContent = summary.total_topics.toLocaleString();
       document.getElementById('institution-count').textContent = summary.total_institutions.toLocaleString();
       
-      // Update category counts
-      if (summary.by_supercategory) {
-        categories.forEach(cat => {
-          const data = summary.by_supercategory.find(s => s.supercategory === cat.slug);
-          if (data) cat.count = data.count;
-        });
-      }
+
+    // Update category counts
+    if (summary.by_supercategory) {
+      categories.forEach(cat => {
+        if (summary.by_supercategory[cat.slug]) {
+          cat.count = summary.by_supercategory[cat.slug];
+        }
+      });
+    }
       
       renderCategories();
     })
@@ -127,7 +129,7 @@ layout: default
     const html = categories.map(cat => `
       <a href="{{ site.baseurl }}/browse/?category=${cat.slug}" class="category-card">
         <div class="category-image">
-          <img src="{{ site.baseurl }}/assets/images/supercategories/${cat.slug}.png" 
+          <img src="{{ site.baseurl }}/assets/images/supercategories/${cat.slug}.jpg" 
                alt="${cat.name}"
                onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, var(--color-${cat.slug}), var(--color-${cat.slug}-light))';">
         </div>
