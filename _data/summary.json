@@ -1,0 +1,20 @@
+{
+  "total_lectures": 15847,
+  "total_speakers": 16912,
+  "total_topics": 4463,
+  "total_institutions": 3459,
+  "generated_at": "2025-10-12T17:16:52.366963",
+  "by_supercategory": {
+    "politics": 1083,
+    "science": 2724,
+    "academic": 4237,
+    "leisure": 277,
+    "arts": 5112,
+    "society": 1451,
+    "music": 80,
+    "religion": 425,
+    "business": 330,
+    "sport": 38,
+    "children": 90
+  }
+}
