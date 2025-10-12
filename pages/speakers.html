@@ -1,0 +1,83 @@
+---
+layout: page
+title: Speakers
+permalink: /speakers/
+---
+
+<div class="speakers-intro">
+  <p>Browse {{ site.data.speakers.size | number_with_delimiter }} speakers who have given lectures in our archive.</p>
+</div>
+
+<div class="speakers-search">
+  <input type="search" id="speaker-search" placeholder="Search speakers..." class="search-input">
+</div>
+
+<div class="alphabet-nav">
+  {% assign letters = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z" | split: "," %}
+  {% for letter in letters %}
+  <a href="#{{ letter }}" class="alphabet-link">{{ letter }}</a>
+  {% endfor %}
+</div>
+
+<div id="speakers-list" class="speakers-list">
+  {% assign speakers_by_letter = site.data.speakers | group_by_exp: "speaker", "speaker.name | slice: 0 | upcase" | sort: "name" %}
+  
+  {% for group in speakers_by_letter %}
+  <section class="speaker-group" id="{{ group.name }}">
+    <h2 class="speaker-group-letter">{{ group.name }}</h2>
+    
+    <div class="speaker-items">
+      {% for speaker in group.items | sort: "name" %}
+      <div class="speaker-item">
+        <h3 class="speaker-name">
+          <a href="{{ '/speakers/' | append: speaker.slug | relative_url }}">
+            {{ speaker.name }}
+          </a>
+        </h3>
+        {% if speaker.bio %}
+        <p class="speaker-bio-preview">{{ speaker.bio | strip_html | truncate: 120 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+<script>
+// Speaker search
+(function() {
+  const searchInput = document.getElementById('speaker-search');
+  const speakers = {{ site.data.speakers | jsonify }};
+  const speakersList = document.getElementById('speakers-list');
+  
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    
+    if (!query) {
+      // Show all speakers grouped by letter
+      location.reload();
+      return;
+    }
+    
+    const filtered = speakers.filter(s => 
+      s.name.toLowerCase().includes(query)
+    );
+    
+    speakersList.innerHTML = `
+      <div class="speaker-items">
+        ${filtered.map(speaker => `
+          <div class="speaker-item">
+            <h3 class="speaker-name">
+              <a href="{{ site.baseurl }}/speakers/${speaker.slug}/">${speaker.name}</a>
+            </h3>
+            ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ${filtered.length === 0 ? '<p>No speakers found.</p>' : ''}
+    `;
+  });
+})();
+</script>
+

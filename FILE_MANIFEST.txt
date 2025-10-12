@@ -1,0 +1,56 @@
+# The Lecture List - File Manifest
+# Copy these files to your LL-2025 GitHub repo
+
+## Root Files (copy to repo root)
+- _config.yml          # Jekyll configuration (baseurl set to /LL-2025)
+- Gemfile              # Ruby dependencies (github-pages gem)
+- .gitignore           # Git ignore rules
+- index.html           # Homepage
+- README.md            # Full documentation
+- DEPLOYMENT.md        # Deployment guide
+- BASEURL_NOTES.md     # Baseurl configuration notes
+- QUICK_START.md       # Quick start guide
+
+## Directories (copy entire folders)
+- _layouts/            # Page templates (3 files)
+  - default.html
+  - page.html
+  - lecture.html
+
+- _includes/           # Reusable components (3 files)
+  - header.html
+  - footer.html
+  - lecture-card.html
+
+- pages/               # Site pages (5 files)
+  - browse.html
+  - topics.html
+  - speakers.html
+  - search.html
+  - about.md
+
+- assets/              # CSS, JS, images
+  - css/main.css       # Complete design system
+  - js/main.js         # JavaScript functionality
+  - images/supercategories/  # (add your Midjourney images here)
+
+## Already in Your Repo (DO NOT OVERWRITE)
+- _data/               # Your exported data (15,847 lectures)
+  - lectures.json
+  - speakers.json
+  - topics.json
+  - institutions.json
+  - supercategories.json
+  - summary.json
+
+## Total Files to Copy: 21 files + 3 directories
+
+## Installation Instructions
+
+1. Extract this tarball
+2. Copy all files to your LL-2025 repo
+3. Add your Midjourney images to assets/images/supercategories/
+4. Commit and push to GitHub
+5. Enable GitHub Pages in repo settings
+
+See QUICK_START.md for detailed instructions.

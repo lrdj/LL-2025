@@ -1,0 +1,129 @@
+---
+layout: page
+title: Browse Lectures
+permalink: /browse/
+---
+
+<div class="browse-controls">
+  <div class="filter-group">
+    <label for="category-filter">Category:</label>
+    <select id="category-filter" class="filter-select">
+      <option value="">All Categories</option>
+      {% for category in site.data.supercategories %}
+      <option value="{{ category.slug }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  
+  <div class="filter-group">
+    <label for="sort-select">Sort by:</label>
+    <select id="sort-select" class="filter-select">
+      <option value="date-desc">Newest First</option>
+      <option value="date-asc">Oldest First</option>
+      <option value="title-asc">Title (A-Z)</option>
+      <option value="title-desc">Title (Z-A)</option>
+    </select>
+  </div>
+  
+  <div class="results-count">
+    Showing <span id="results-count">{{ site.data.lectures.size }}</span> lectures
+  </div>
+</div>
+
+<div id="lecture-list" class="lecture-grid">
+  {% for lecture in site.data.lectures limit:24 %}
+    {% include lecture-card.html lecture=lecture %}
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  <button id="load-more" class="btn btn-primary">Load More</button>
+</div>
+
+<script>
+// Client-side filtering and pagination
+(function() {
+  const lectures = {{ site.data.lectures | jsonify }};
+  let filteredLectures = [...lectures];
+  let displayedCount = 24;
+  
+  const categoryFilter = document.getElementById('category-filter');
+  const sortSelect = document.getElementById('sort-select');
+  const lectureList = document.getElementById('lecture-list');
+  const resultsCount = document.getElementById('results-count');
+  const loadMoreBtn = document.getElementById('load-more');
+  
+  function filterLectures() {
+    const category = categoryFilter.value;
+    
+    filteredLectures = lectures.filter(lecture => {
+      if (category && lecture.supercategory !== category) return false;
+      return true;
+    });
+    
+    sortLectures();
+  }
+  
+  function sortLectures() {
+    const sortBy = sortSelect.value;
+    
+    filteredLectures.sort((a, b) => {
+      switch(sortBy) {
+        case 'date-desc':
+          return (b.added || '').localeCompare(a.added || '');
+        case 'date-asc':
+          return (a.added || '').localeCompare(b.added || '');
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+    
+    displayedCount = 24;
+    renderLectures();
+  }
+  
+  function renderLectures() {
+    const toDisplay = filteredLectures.slice(0, displayedCount);
+    
+    lectureList.innerHTML = toDisplay.map(lecture => {
+      const speakers = lecture.speakers.slice(0, 2).map(s => s.name).join(', ');
+      const moreCount = lecture.speakers.length > 2 ? ` +${lecture.speakers.length - 2} more` : '';
+      
+      return `
+        <article class="lecture-card">
+          <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
+            <span class="lecture-card-category">${lecture.supercategory}</span>
+          </div>
+          <div class="lecture-card-content">
+            <h3 class="lecture-card-title">
+              <a href="{{ site.baseurl }}/lectures/${lecture.slug}/">${lecture.title}</a>
+            </h3>
+            ${speakers ? `<div class="lecture-card-speakers">${speakers}${moreCount}</div>` : ''}
+            ${lecture.synopsis ? `<p class="lecture-card-synopsis">${lecture.synopsis.substring(0, 150)}...</p>` : ''}
+            <div class="lecture-card-meta">
+              ${lecture.added ? `<time>${new Date(lecture.added).toLocaleDateString('en-GB', {month: 'short', year: 'numeric'})}</time>` : ''}
+              ${lecture.duration ? `<span class="lecture-duration">${lecture.duration} min</span>` : ''}
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+    
+    resultsCount.textContent = filteredLectures.length;
+    loadMoreBtn.style.display = displayedCount >= filteredLectures.length ? 'none' : 'block';
+  }
+  
+  categoryFilter.addEventListener('change', filterLectures);
+  sortSelect.addEventListener('change', sortLectures);
+  
+  loadMoreBtn.addEventListener('click', () => {
+    displayedCount += 24;
+    renderLectures();
+  });
+})();
+</script>
+

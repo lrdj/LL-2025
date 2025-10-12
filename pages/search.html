@@ -1,0 +1,174 @@
+---
+layout: page
+title: Search
+permalink: /search/
+---
+
+<div class="search-page">
+  <div class="search-box">
+    <input 
+      type="search" 
+      id="pagefind-search" 
+      placeholder="Search lectures, speakers, topics..." 
+      class="search-input-large"
+      autofocus
+    >
+  </div>
+  
+  <div id="search-results" class="search-results">
+    <!-- Results will be inserted here -->
+  </div>
+  
+  <div id="search-empty" class="search-empty" style="display: none;">
+    <p>No results found. Try different keywords.</p>
+  </div>
+</div>
+
+<style>
+.search-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-box {
+  margin-bottom: var(--spacing-xl);
+}
+
+.search-input-large {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color 0.2s ease;
+}
+
+.search-input-large:focus {
+  outline: none;
+  border-color: var(--color-science);
+}
+
+.search-results {
+  margin-top: var(--spacing-lg);
+}
+
+.search-result {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background: var(--color-background-alt);
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+}
+
+.search-result:hover {
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.search-result-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.search-result-title a {
+  color: var(--color-text);
+}
+
+.search-result-title a:hover {
+  color: var(--color-science);
+}
+
+.search-result-excerpt {
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+.search-result-excerpt mark {
+  background: #fff3cd;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.search-empty {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--color-text-light);
+}
+</style>
+
+<!-- Pagefind Search Integration -->
+<link href="{{ site.baseurl }}/pagefind/pagefind-ui.css" rel="stylesheet">
+<script src="{{ site.baseurl }}/pagefind/pagefind-ui.js"></script>
+
+<script>
+// Initialize Pagefind UI
+window.addEventListener('DOMContentLoaded', (event) => {
+  new PagefindUI({ 
+    element: "#pagefind-search",
+    showSubResults: true,
+    showImages: false,
+    excerptLength: 30
+  });
+});
+</script>
+
+<!-- Fallback: Simple client-side search if Pagefind not available -->
+<script>
+(function() {
+  // Check if Pagefind loaded, otherwise use simple search
+  setTimeout(function() {
+    if (typeof PagefindUI === 'undefined') {
+      console.log('Pagefind not available, using simple search');
+      initSimpleSearch();
+    }
+  }, 1000);
+  
+  function initSimpleSearch() {
+    const searchInput = document.getElementById('pagefind-search');
+    const resultsContainer = document.getElementById('search-results');
+    const emptyState = document.getElementById('search-empty');
+    
+    // Load lectures data
+    fetch('/data/lectures.json')
+      .then(response => response.json())
+      .then(lectures => {
+        searchInput.addEventListener('input', function() {
+          const query = this.value.toLowerCase().trim();
+          
+          if (query.length < 2) {
+            resultsContainer.innerHTML = '';
+            emptyState.style.display = 'none';
+            return;
+          }
+          
+          const results = lectures.filter(lecture => {
+            const searchText = `${lecture.title} ${lecture.synopsis} ${lecture.keywords}`.toLowerCase();
+            return searchText.includes(query);
+          }).slice(0, 20);
+          
+          if (results.length === 0) {
+            resultsContainer.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+          }
+          
+          emptyState.style.display = 'none';
+          resultsContainer.innerHTML = results.map(lecture => {
+            const speakers = lecture.speakers.map(s => s.name).join(', ');
+            return `
+              <div class="search-result">
+                <h3 class="search-result-title">
+                  <a href="{{ site.baseurl }}/lectures/${lecture.slug}/">${lecture.title}</a>
+                </h3>
+                ${speakers ? `<p class="search-result-meta">${speakers}</p>` : ''}
+                ${lecture.synopsis ? `<p class="search-result-excerpt">${lecture.synopsis.substring(0, 200)}...</p>` : ''}
+              </div>
+            `;
+          }).join('');
+        });
+      });
+  }
+})();
+</script>
+

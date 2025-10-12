@@ -1,0 +1,53 @@
+---
+layout: page
+title: Topics
+permalink: /topics/
+---
+
+<div class="topics-intro">
+  <p>Explore {{ site.data.topics.size | number_with_delimiter }} topics organized into {{ site.data.supercategories.size }} main categories.</p>
+</div>
+
+<div class="topics-by-category">
+  {% for category in site.data.supercategories %}
+  {% assign category_topics = site.data.topics | where: "supercategory", category.slug | sort: "name" %}
+  
+  {% if category_topics.size > 0 %}
+  <section class="topic-category">
+    <h2 class="topic-category-title" style="color: {{ category.color }}">
+      {{ category.name }}
+      <span class="topic-count">({{ category_topics.size }} topics)</span>
+    </h2>
+    
+    <div class="topic-cloud">
+      {% for topic in category_topics limit:50 %}
+      <a href="{{ '/topics/' | append: topic.path | relative_url }}" class="topic-tag" style="--category-color: {{ category.color }}">
+        {{ topic.name }}
+      </a>
+      {% endfor %}
+      
+      {% if category_topics.size > 50 %}
+      <button class="show-more-topics" data-category="{{ category.slug }}">
+        Show all {{ category_topics.size }} topics →
+      </button>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+// Show more topics functionality
+document.querySelectorAll('.show-more-topics').forEach(button => {
+  button.addEventListener('click', function() {
+    const category = this.dataset.category;
+    const topicCloud = this.previousElementSibling;
+    
+    // In a real implementation, you'd load more topics here
+    // For now, just hide the button
+    this.style.display = 'none';
+  });
+});
+</script>
+

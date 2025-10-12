@@ -1,0 +1,50 @@
+{% comment %}
+  Usage: {% include lecture-card.html lecture=lecture %}
+{% endcomment %}
+
+{% assign lecture = include.lecture %}
+{% assign supercategory = site.data.supercategories | where: "slug", lecture.supercategory | first %}
+
+<article class="lecture-card">
+  <div class="lecture-card-image" style="background: linear-gradient(135deg, {{ supercategory.color }}dd, {{ supercategory.color }}99);">
+    <span class="lecture-card-category">{{ lecture.supercategory | capitalize }}</span>
+  </div>
+  
+  <div class="lecture-card-content">
+    <h3 class="lecture-card-title">
+      <a href="{{ '/lectures/' | append: lecture.slug | relative_url }}">
+        {{ lecture.title }}
+      </a>
+    </h3>
+    
+    {% if lecture.speakers and lecture.speakers.size > 0 %}
+    <div class="lecture-card-speakers">
+      {% for speaker in lecture.speakers limit:2 %}
+        <span class="speaker-name">{{ speaker.name }}</span>{% unless forloop.last %}, {% endunless %}
+      {% endfor %}
+      {% if lecture.speakers.size > 2 %}
+        <span class="speaker-more">+{{ lecture.speakers.size | minus: 2 }} more</span>
+      {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if lecture.synopsis %}
+    <p class="lecture-card-synopsis">
+      {{ lecture.synopsis | truncate: 150 }}
+    </p>
+    {% endif %}
+    
+    <div class="lecture-card-meta">
+      {% if lecture.added %}
+      <time datetime="{{ lecture.added }}">
+        {{ lecture.added | date: "%b %Y" }}
+      </time>
+      {% endif %}
+      
+      {% if lecture.duration %}
+      <span class="lecture-duration">{{ lecture.duration }} min</span>
+      {% endif %}
+    </div>
+  </div>
+</article>
+

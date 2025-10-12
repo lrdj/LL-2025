@@ -1,0 +1,72 @@
+---
+layout: default
+---
+
+<article class="lecture-detail">
+  <header class="lecture-header">
+    <div class="lecture-meta">
+      <span class="lecture-category" style="background-color: {{ page.supercategory_color }}">
+        {{ page.supercategory | capitalize }}
+      </span>
+      {% if page.added %}
+      <time class="lecture-date" datetime="{{ page.added }}">
+        {{ page.added | date: "%B %d, %Y" }}
+      </time>
+      {% endif %}
+    </div>
+    
+    <h1 class="lecture-title">{{ page.title }}</h1>
+    
+    {% if page.speakers and page.speakers.size > 0 %}
+    <div class="lecture-speakers">
+      {% for speaker in page.speakers %}
+      <a href="{{ '/speakers/' | append: speaker.slug | relative_url }}" class="speaker-link">
+        {{ speaker.name }}
+      </a>{% unless forloop.last %}, {% endunless %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </header>
+  
+  {% if page.synopsis %}
+  <div class="lecture-synopsis">
+    <h2>Synopsis</h2>
+    <p>{{ page.synopsis }}</p>
+  </div>
+  {% endif %}
+  
+  {% if page.body %}
+  <div class="lecture-body">
+    {{ page.body | markdownify }}
+  </div>
+  {% endif %}
+  
+  {% if page.additional_info %}
+  <div class="lecture-additional">
+    <h3>Additional Information</h3>
+    {{ page.additional_info | markdownify }}
+  </div>
+  {% endif %}
+  
+  {% if page.topics and page.topics.size > 0 %}
+  <div class="lecture-topics">
+    <h3>Topics</h3>
+    <ul class="topic-list">
+      {% for topic in page.topics %}
+      <li>
+        <a href="{{ '/topics/' | append: topic.path | relative_url }}" class="topic-tag">
+          {{ topic.name }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  
+  {% if page.keywords %}
+  <div class="lecture-keywords">
+    <strong>Keywords:</strong> {{ page.keywords }}
+  </div>
+  {% endif %}
+</article>
+

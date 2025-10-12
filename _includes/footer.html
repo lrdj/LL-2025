@@ -1,0 +1,41 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>{{ site.title }}</h3>
+        <p>{{ site.description }}</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="{{ '/browse/' | relative_url }}">Browse Lectures</a></li>
+          <li><a href="{{ '/topics/' | relative_url }}">Topics</a></li>
+          <li><a href="{{ '/speakers/' | relative_url }}">Speakers</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>About</h4>
+        <ul>
+          <li><a href="{{ '/about/' | relative_url }}">About This Archive</a></li>
+          <li><a href="{{ '/feed.xml' | relative_url }}">RSS Feed</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Statistics</h4>
+        <ul>
+          <li>{{ site.data.summary.total_lectures | number_with_delimiter }} Lectures</li>
+          <li>{{ site.data.summary.total_speakers | number_with_delimiter }} Speakers</li>
+          <li>{{ site.data.summary.total_topics | number_with_delimiter }} Topics</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; {{ 'now' | date: "%Y" }} {{ site.title }}. Archive of lectures from 2003-2018.</p>
+    </div>
+  </div>
+</footer>
+

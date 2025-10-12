@@ -1,0 +1,77 @@
+---
+layout: default
+title: Home
+---
+
+<div class="hero">
+  <div class="container">
+    <h1 class="hero-title">The Lecture List</h1>
+    <p class="hero-subtitle">Discover {{ site.data.summary.total_lectures | number_with_delimiter }} public lectures from across the UK</p>
+    <p class="hero-description">An archive of talks on science, arts, politics, and more from 2003-2018</p>
+    
+    <div class="hero-search">
+      <input type="search" id="search-input" placeholder="Search lectures, speakers, or topics..." class="search-input">
+      <button class="search-button">Search</button>
+    </div>
+  </div>
+</div>
+
+<section class="supercategories">
+  <div class="container">
+    <h2 class="section-title">Browse by Category</h2>
+    
+    <div class="category-grid">
+      {% for category in site.data.supercategories %}
+      {% assign count = site.data.summary.by_supercategory[category.slug] | default: 0 %}
+      <a href="{{ '/browse/' | append: category.slug | append: '/' | relative_url }}" class="category-card" style="--category-color: {{ category.color }}">
+        <div class="category-image">
+          <img src="{{ '/assets/images/supercategories/' | append: category.image | relative_url }}" alt="{{ category.name }}">
+        </div>
+        <div class="category-content">
+          <h3 class="category-name">{{ category.name }}</h3>
+          <p class="category-count">{{ count }} lectures</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="recent-lectures">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Recent Lectures</h2>
+      <a href="{{ '/browse/' | relative_url }}" class="section-link">View all →</a>
+    </div>
+    
+    <div class="lecture-grid">
+      {% for lecture in site.data.lectures limit:12 %}
+        {% include lecture-card.html lecture=lecture %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">{{ site.data.summary.total_lectures | number_with_delimiter }}</div>
+        <div class="stat-label">Lectures</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ site.data.summary.total_speakers | number_with_delimiter }}</div>
+        <div class="stat-label">Speakers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ site.data.summary.total_topics | number_with_delimiter }}</div>
+        <div class="stat-label">Topics</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ site.data.summary.total_institutions | number_with_delimiter }}</div>
+        <div class="stat-label">Institutions</div>
+      </div>
+    </div>
+  </div>
+</section>
+
