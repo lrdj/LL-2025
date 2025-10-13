@@ -159,7 +159,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
             return `
               <div class="search-result">
                 <h3 class="search-result-title">
-                  <a href="{{ site.baseurl }}/lectures/${lecture.slug}/">${lecture.title}</a>
+              <a href="{{ '/lecture/' | relative_url }}?slug=${lecture.slug}">${lecture.title}</a>
                 </h3>
                 ${speakers ? `<p class="search-result-meta">${speakers}</p>` : ''}
                 ${lecture.synopsis ? `<p class="search-result-excerpt">${lecture.synopsis.substring(0, 200)}...</p>` : ''}

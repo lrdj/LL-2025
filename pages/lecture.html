@@ -25,6 +25,10 @@ permalink: /lecture/
       if (typeof DataLoader === 'undefined') {
         await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
       }
+      // Ensure base URL respects Jekyll baseurl
+      if (typeof DataLoader !== 'undefined') {
+        DataLoader.baseUrl = '{{ site.baseurl }}/assets/data';
+      }
       
       const lecture = await DataLoader.loadLecture(slug);
       
@@ -429,4 +433,3 @@ permalink: /lecture/
     color: #dc3545;
   }
 </style>
-

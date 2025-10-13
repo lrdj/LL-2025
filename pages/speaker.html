@@ -25,6 +25,10 @@ permalink: /speaker/
       if (typeof DataLoader === 'undefined') {
         await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
       }
+      // Ensure base URL respects Jekyll baseurl
+      if (typeof DataLoader !== 'undefined') {
+        DataLoader.baseUrl = '{{ site.baseurl }}/assets/data';
+      }
       
       const speaker = await DataLoader.loadSpeaker(slug);
       
@@ -400,4 +404,3 @@ permalink: /speaker/
     }
   }
 </style>
-

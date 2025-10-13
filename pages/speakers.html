@@ -63,7 +63,7 @@ permalink: /speakers/
             ${speakersInGroup.map(speaker => `
               <div class="speaker-item">
                 <h3 class="speaker-name">
-                  <a href="{{ site.baseurl }}/speakers/${speaker.slug}/">${speaker.name}</a>
+                  <a href="{{ '/speaker/' | relative_url }}?slug=${speaker.slug}">${speaker.name}</a>
                 </h3>
                 ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
               </div>
@@ -100,7 +100,7 @@ permalink: /speakers/
         ${filtered.map(speaker => `
           <div class="speaker-item">
             <h3 class="speaker-name">
-              <a href="{{ site.baseurl }}/speakers/${speaker.slug}/">${speaker.name}</a>
+              <a href="{{ '/speaker/' | relative_url }}?slug=${speaker.slug}">${speaker.name}</a>
             </h3>
             ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
           </div>
@@ -212,4 +212,3 @@ permalink: /speakers/
   line-height: 1.5;
 }
 </style>
-

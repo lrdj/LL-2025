@@ -115,7 +115,8 @@ layout: default
     .then(response => response.json())
     .then(lectures => {
       const recent = lectures
-        .sort((a, b) => new Date(b.added) - new Date(a.added))
+        // Use event date if present; fall back to added
+        .sort((a, b) => new Date(b.date || b.added) - new Date(a.date || a.added))
         .slice(0, 6);
       
       renderRecentLectures(recent);
@@ -155,12 +156,12 @@ layout: default
           </div>
           <div class="lecture-card-content">
             <h3 class="lecture-card-title">
-              <a href="{{ site.baseurl }}/lectures/${lecture.slug}/">${lecture.title}</a>
+              <a href="{{ '/lecture/' | relative_url }}?slug=${lecture.slug}">${lecture.title}</a>
             </h3>
             ${speakers ? `<div class="lecture-card-speakers">${speakers}${moreCount}</div>` : ''}
             ${lecture.synopsis ? `<p class="lecture-card-synopsis">${lecture.synopsis.substring(0, 120)}...</p>` : ''}
             <div class="lecture-card-meta">
-              <span>${new Date(lecture.added).toLocaleDateString()}</span>
+              <span>${new Date(lecture.date || lecture.added).toLocaleDateString()}</span>
             </div>
           </div>
         </div>
@@ -177,4 +178,3 @@ layout: default
   padding: var(--spacing-xxl) 0;
 }
 </style>
-
