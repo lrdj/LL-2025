@@ -41,9 +41,9 @@ This is a **static archive** - a snapshot of lecture listings from 2003-2018. Th
 
 ### Browse the Archive
 
-- [Browse all lectures](/browse/) - Filter by category, date, or topic
-- [Explore topics](/topics/) - {{ site.data.summary.total_topics | number_with_delimiter }} topics organized by category
-- [View speakers](/speakers/) - Alphabetical listing of all speakers
+- [Browse all lectures]({{ '/browse/' | relative_url }}) - Filter by category, date, or topic
+- [Explore topics]({{ '/topics/' | relative_url }}) - {{ site.data.summary.total_topics | number_with_delimiter }} topics organized by category
+- [View speakers]({{ '/speakers/' | relative_url }}) - Alphabetical listing of all speakers
 
 ### Technical Details
 
@@ -58,4 +58,3 @@ The site is open source and the data is available for research purposes.
 ---
 
 *The Lecture List: Preserving 15 years of UK public intellectual life*
-

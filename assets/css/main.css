@@ -16,7 +16,7 @@
   --color-music: #7B2D3E;
   --color-music-light: #964357;
   --color-religion: #5B3A7D;
-  --color-religion-light: #7451 96;
+  --color-religion-light: #745196;
   --color-academic: #002147;
   --color-academic-light: #1A3A5F;
   --color-sport: #C93D3D;
@@ -603,4 +603,3 @@ a:hover {
 .section-link:hover {
   text-decoration: underline;
 }
-

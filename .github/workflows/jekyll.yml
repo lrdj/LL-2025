@@ -1,11 +1,26 @@
+# GitHub Pages deployment via Actions for Jekyll
+#
+# How it works
+# - Triggers on push to main and manual runs (workflow_dispatch)
+# - build job:
+#   • Checks out code
+#   • Sets up Ruby (with Bundler cache)
+#   • Configures GitHub Pages (id: pages) to obtain the base_path output
+#   • Builds the site with Jekyll, passing --baseurl to match the Pages path
+#   • Uploads the generated _site as an artifact
+# - deploy job:
+#   • Publishes the artifact to the GitHub Pages environment
+
 name: Deploy Jekyll site to Pages
 
 on:
+  # Build on every push to main; allow manual runs too
   push:
     branches: ["main"]
   workflow_dispatch:
 
 permissions:
+  # Minimum permissions required for Pages deployments
   contents: read
   pages: write
   id-token: write
@@ -16,23 +31,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        # Fetch the repository contents
       
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
+        # Installs Ruby and caches gems between runs
       
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v4
+        # Configures the Pages deployment and exposes outputs like base_path
       
       - name: Build with Jekyll
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
+        # Important: Pass the Pages base_path as --baseurl so all links resolve
+        # correctly at https://<user>.github.io/<repo>/ for project sites.
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        # Upload the generated _site directory for deployment
 
   deploy:
     environment:
@@ -44,3 +66,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        # Publish the previously uploaded artifact to Pages

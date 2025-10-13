@@ -130,7 +130,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
     const emptyState = document.getElementById('search-empty');
     
     // Load lectures data
-    fetch('/data/lectures.json')
+    fetch('{{ site.baseurl }}/assets/data/lectures.json')
       .then(response => response.json())
       .then(lectures => {
         searchInput.addEventListener('input', function() {
@@ -171,4 +171,3 @@ window.addEventListener('DOMContentLoaded', (event) => {
   }
 })();
 </script>
-
