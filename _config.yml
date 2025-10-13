@@ -41,8 +41,8 @@ defaults:
       layout: "topic"
 
 # Pagination
-paginate: 20
-paginate_path: "/page:num/"
+# paginate: 20
+# paginate_path: "/page:num/"
 
 # Exclude from processing
 exclude:

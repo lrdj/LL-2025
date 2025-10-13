@@ -1,150 +1,316 @@
 ---
 layout: page
-title: Topics
+title: Browse Topics
 permalink: /topics/
 ---
 
 <div class="topics-intro">
-  <p id="topic-count">Loading topics...</p>
+  <p>Explore lectures by topic. Topics are organized hierarchically - click to expand categories and discover subtopics.</p>
 </div>
 
-<div id="topics-by-category" class="topics-by-category">
-  <p>Loading topics...</p>
+<div class="topics-filter">
+  <input type="search" id="topic-search" placeholder="Search topics..." class="topic-search-input">
+  <div class="supercategory-tabs" id="supercategory-tabs">
+    <button class="tab-button active" data-category="">All</button>
+  </div>
+</div>
+
+<div id="topics-container" class="topics-container">
+  <div class="loading">Loading topics...</div>
 </div>
 
 <script>
-// Load and display topics
-(function() {
-  const topicsContainer = document.getElementById('topics-by-category');
-  const topicCount = document.getElementById('topic-count');
+(async function() {
+  let allTopics = [];
+  let allLectures = [];
+  let filteredTopics = [];
+  let currentSupercategory = '';
   
-  const supercategories = [
-    { slug: 'science', name: 'Science' },
-    { slug: 'arts', name: 'Arts' },
-    { slug: 'politics', name: 'Politics' },
-    { slug: 'business', name: 'Business' },
-    { slug: 'music', name: 'Music' },
-    { slug: 'religion', name: 'Religion' },
-    { slug: 'academic', name: 'Academic' },
-    { slug: 'sport', name: 'Sport' },
-    { slug: 'society', name: 'Society' },
-    { slug: 'children', name: 'Children' },
-    { slug: 'leisure', name: 'Leisure' }
-  ];
+  const topicsContainer = document.getElementById('topics-container');
+  const topicSearch = document.getElementById('topic-search');
+  const supercategoryTabs = document.getElementById('supercategory-tabs');
   
-  // Load topics from JSON
-  fetch('{{ site.baseurl }}/assets/data/topics.json')
-    .then(response => response.json())
-    .then(topics => {
-      topicCount.textContent = `Explore ${topics.length.toLocaleString()} topics organized by category.`;
-      renderTopics(topics);
-    })
-    .catch(error => {
-      console.error('Error loading topics:', error);
-      topicsContainer.innerHTML = '<p>Error loading topics. Please refresh the page.</p>';
+  try {
+    // Load topics and lectures
+    const [topicsResponse, lecturesResponse, categoriesResponse] = await Promise.all([
+      fetch('{{ "/assets/data/topics.json" | relative_url }}'),
+      fetch('{{ "/assets/data/lectures.json" | relative_url }}'),
+      fetch('{{ "/assets/data/supercategories.json" | relative_url }}')
+    ]);
+    
+    allTopics = await topicsResponse.json();
+    allLectures = await lecturesResponse.json();
+    const categories = await categoriesResponse.json();
+    
+    // Count lectures per topic
+    const topicCounts = {};
+    allLectures.forEach(lecture => {
+      if (lecture.topics) {
+        lecture.topics.forEach(topic => {
+          topicCounts[topic.id] = (topicCounts[topic.id] || 0) + 1;
+        });
+      }
     });
+    
+    // Add counts to topics
+    allTopics.forEach(topic => {
+      topic.lectureCount = topicCounts[topic.id] || 0;
+    });
+    
+    // Build supercategory tabs
+    categories.forEach(cat => {
+      const button = document.createElement('button');
+      button.className = 'tab-button';
+      button.textContent = cat.name;
+      button.dataset.category = cat.slug;
+      button.addEventListener('click', () => filterBySupercategory(cat.slug));
+      supercategoryTabs.appendChild(button);
+    });
+    
+    // Initial render
+    filterTopics();
+    
+  } catch (error) {
+    console.error('Error loading topics:', error);
+    topicsContainer.innerHTML = '<div class="error">Error loading topics</div>';
+  }
   
-  function renderTopics(topics) {
-    // Group topics by supercategory
-    const byCategory = {};
+  function filterBySupercategory(category) {
+    currentSupercategory = category;
+    
+    // Update active tab
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.category === category);
+    });
+    
+    filterTopics();
+  }
+  
+  function filterTopics() {
+    const searchTerm = topicSearch.value.toLowerCase();
+    
+    filteredTopics = allTopics.filter(topic => {
+      // Filter by supercategory
+      if (currentSupercategory) {
+        const pathStart = `/${currentSupercategory}/`;
+        if (!topic.path.startsWith(pathStart)) return false;
+      }
+      
+      // Filter by search term
+      if (searchTerm) {
+        if (!topic.name.toLowerCase().includes(searchTerm) && 
+            !topic.path.toLowerCase().includes(searchTerm)) {
+          return false;
+        }
+      }
+      
+      // Only show topics with lectures
+      return topic.lectureCount > 0;
+    });
+    
+    renderTopics();
+  }
+  
+  function renderTopics() {
+    // Build hierarchy
+    const hierarchy = buildHierarchy(filteredTopics);
+    
+    topicsContainer.innerHTML = `
+      <div class="topics-grid">
+        ${renderHierarchy(hierarchy)}
+      </div>
+    `;
+  }
+  
+  function buildHierarchy(topics) {
+    // Group topics by their top-level category
+    const grouped = {};
     
     topics.forEach(topic => {
-      // Determine supercategory from path
       const pathParts = topic.path.split('/').filter(p => p);
-      const category = pathParts[0] || 'other';
+      const topLevel = pathParts[0] || 'other';
       
-      if (!byCategory[category]) {
-        byCategory[category] = [];
+      if (!grouped[topLevel]) {
+        grouped[topLevel] = [];
       }
-      
-      // Only show top-level topics (2 levels deep)
-      if (pathParts.length <= 2) {
-        byCategory[category].push(topic);
-      }
+      grouped[topLevel].push(topic);
     });
     
-    // Render by supercategory order
-    const html = supercategories.map(supercat => {
-      const categoryTopics = (byCategory[supercat.slug] || [])
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .slice(0, 50); // Limit to 50 per category for performance
-      
-      if (categoryTopics.length === 0) return '';
-      
-      return `
-        <section class="topic-category">
-          <h2 class="topic-category-title" style="color: var(--color-${supercat.slug});">
-            ${supercat.name}
-            <span class="topic-count">(${categoryTopics.length}${byCategory[supercat.slug].length > 50 ? '+' : ''})</span>
-          </h2>
-          <div class="topic-list">
-            ${categoryTopics.map(topic => `
-              <a href="{{ site.baseurl }}/topics${topic.path}/" class="topic-link">
-                ${topic.name}
-              </a>
-            `).join('')}
-          </div>
-        </section>
-      `;
-    }).join('');
-    
-    topicsContainer.innerHTML = html || '<p>No topics found.</p>';
+    return grouped;
   }
+  
+  function renderHierarchy(hierarchy) {
+    return Object.entries(hierarchy)
+      .sort((a, b) => {
+        const countA = a[1].reduce((sum, t) => sum + t.lectureCount, 0);
+        const countB = b[1].reduce((sum, t) => sum + t.lectureCount, 0);
+        return countB - countA;
+      })
+      .map(([category, topics]) => {
+        const totalCount = topics.reduce((sum, t) => sum + t.lectureCount, 0);
+        
+        return `
+          <div class="topic-category">
+            <h3 class="category-title">
+              ${category.charAt(0).toUpperCase() + category.slice(1)}
+              <span class="category-count">${totalCount} lectures</span>
+            </h3>
+            <div class="topic-list">
+              ${topics
+                .sort((a, b) => b.lectureCount - a.lectureCount)
+                .slice(0, 20)
+                .map(topic => `
+                  <a href="{{ '/topic/' | relative_url }}?id=${topic.id}" class="topic-item">
+                    <span class="topic-name">${topic.name}</span>
+                    <span class="topic-path">${topic.path}</span>
+                    <span class="topic-count">${topic.lectureCount}</span>
+                  </a>
+                `).join('')}
+              ${topics.length > 20 ? `
+                <div class="topic-more">
+                  +${topics.length - 20} more topics in ${category}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+  }
+  
+  topicSearch.addEventListener('input', filterTopics);
+  
 })();
 </script>
 
 <style>
-.topics-intro {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-}
-
-.topics-by-category {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.topic-category {
-  margin-bottom: var(--spacing-xxl);
-}
-
-.topic-category-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid currentColor;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.topic-count {
-  font-size: 1rem;
-  font-weight: 400;
-  color: var(--color-text-light);
-}
-
-.topic-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-.topic-link {
-  display: inline-block;
-  padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--color-background-alt);
-  border-radius: var(--border-radius);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.topic-link:hover {
-  background: var(--color-science);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
+  .topics-intro {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .topics-filter {
+    margin-bottom: 2rem;
+  }
+  
+  .topic-search-input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .supercategory-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .tab-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .tab-button:hover {
+    background: #f0f0f0;
+  }
+  
+  .tab-button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+  
+  .topics-grid {
+    display: grid;
+    gap: 2rem;
+  }
+  
+  .topic-category {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+  
+  .category-title {
+    margin: 0 0 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  .category-count {
+    font-size: 0.875rem;
+    font-weight: normal;
+    color: #666;
+  }
+  
+  .topic-list {
+    display: grid;
+    gap: 0.5rem;
+  }
+  
+  .topic-item {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.2s;
+    align-items: center;
+  }
+  
+  .topic-item:hover {
+    background: #e8f4ff;
+    transform: translateX(4px);
+  }
+  
+  .topic-name {
+    font-weight: 600;
+  }
+  
+  .topic-path {
+    font-size: 0.75rem;
+    color: #999;
+    font-family: monospace;
+  }
+  
+  .topic-count {
+    font-size: 0.875rem;
+    color: #007bff;
+    font-weight: 600;
+    text-align: right;
+  }
+  
+  .topic-more {
+    padding: 0.75rem;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+  }
+  
+  .loading,
+  .error {
+    padding: 2rem;
+    text-align: center;
+    color: #666;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
 </style>
 

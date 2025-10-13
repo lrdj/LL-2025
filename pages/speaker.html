@@ -1,0 +1,403 @@
+---
+layout: default
+title: Speaker
+permalink: /speaker/
+---
+
+<div class="speaker-detail" id="speaker-container">
+  <div class="loading">Loading speaker details...</div>
+</div>
+
+<script>
+  // Get speaker slug from URL query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const slug = urlParams.get('slug');
+  
+  if (!slug) {
+    document.getElementById('speaker-container').innerHTML = '<div class="error">No speaker specified</div>';
+  } else {
+    loadSpeaker(slug);
+  }
+  
+  async function loadSpeaker(slug) {
+    try {
+      // Load data-loader helper if not already loaded
+      if (typeof DataLoader === 'undefined') {
+        await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
+      }
+      
+      const speaker = await DataLoader.loadSpeaker(slug);
+      
+      if (!speaker) {
+        document.getElementById('speaker-container').innerHTML = '<div class="error">Speaker not found</div>';
+        return;
+      }
+      
+      // Still need to load all lectures to find this speaker's lectures
+      // TODO: Could optimize this with a speaker->lectures index
+      const allLectures = await DataLoader.loadAllLectures();
+      
+      const speakerLectures = allLectures.filter(lecture => 
+        lecture.speakers && lecture.speakers.some(s => s.id === speaker.id)
+      );
+      
+      renderSpeaker(speaker, speakerLectures);
+    } catch (error) {
+      console.error('Error loading speaker:', error);
+      document.getElementById('speaker-container').innerHTML = '<div class="error">Error loading speaker</div>';
+    }
+  }
+  
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  
+  function renderSpeaker(speaker, lectures) {
+    const container = document.getElementById('speaker-container');
+    
+    // Sort lectures by date (most recent first)
+    lectures.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Get unique topics from all lectures
+    const topicsMap = new Map();
+    lectures.forEach(lecture => {
+      if (lecture.topics) {
+        lecture.topics.forEach(topic => {
+          if (!topicsMap.has(topic.id)) {
+            topicsMap.set(topic.id, topic);
+          }
+        });
+      }
+    });
+    const uniqueTopics = Array.from(topicsMap.values());
+    
+    // Get unique venues
+    const venuesMap = new Map();
+    lectures.forEach(lecture => {
+      if (lecture.venue) {
+        if (!venuesMap.has(lecture.venue.id)) {
+          venuesMap.set(lecture.venue.id, lecture.venue);
+        }
+      }
+    });
+    const uniqueVenues = Array.from(venuesMap.values());
+    
+    // Count lectures by supercategory
+    const categoryCount = {};
+    lectures.forEach(lecture => {
+      if (lecture.supercategory) {
+        categoryCount[lecture.supercategory] = (categoryCount[lecture.supercategory] || 0) + 1;
+      }
+    });
+    
+    container.innerHTML = `
+      <div class="container">
+        <div class="speaker-header">
+          <h1 class="speaker-name">${speaker.name}</h1>
+          ${speaker.title ? `<p class="speaker-title-text">${speaker.title}</p>` : ''}
+          ${speaker.url ? `<p class="speaker-url"><a href="${speaker.url}" target="_blank" rel="noopener">${speaker.url}</a></p>` : ''}
+        </div>
+        
+        ${speaker.bio && speaker.bio !== '[Null]' ? `
+          <div class="speaker-bio">
+            <h2>Biography</h2>
+            <p>${speaker.bio}</p>
+          </div>
+        ` : ''}
+        
+        <div class="speaker-stats">
+          <div class="stat-card">
+            <div class="stat-number">${lectures.length}</div>
+            <div class="stat-label">Lectures</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${uniqueTopics.length}</div>
+            <div class="stat-label">Topics</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${uniqueVenues.length}</div>
+            <div class="stat-label">Venues</div>
+          </div>
+        </div>
+        
+        ${Object.keys(categoryCount).length > 0 ? `
+          <div class="speaker-categories">
+            <h3>Lectures by Category</h3>
+            <div class="category-list">
+              ${Object.entries(categoryCount)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cat, count]) => `
+                  <span class="category-badge" data-category="${cat}">
+                    ${cat} (${count})
+                  </span>
+                `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        ${uniqueTopics.length > 0 ? `
+          <div class="speaker-topics">
+            <h3>Topics Covered</h3>
+            <div class="topic-list">
+              ${uniqueTopics.slice(0, 20).map(topic => `
+                <a href="{{ '/topic/' | relative_url }}?id=${topic.id}" class="topic-tag">${topic.name}</a>
+              `).join('')}
+              ${uniqueTopics.length > 20 ? `<span class="more-topics">+${uniqueTopics.length - 20} more</span>` : ''}
+            </div>
+          </div>
+        ` : ''}
+        
+        <div class="speaker-lectures">
+          <h2>Lectures (${lectures.length})</h2>
+          <div class="lectures-list">
+            ${lectures.map(lecture => {
+              const dateStr = lecture.date ? new Date(lecture.date).toLocaleDateString('en-GB', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              }) : 'Date TBA';
+              
+              return `
+                <div class="lecture-item">
+                  <div class="lecture-item-header">
+                    <h3 class="lecture-item-title">
+                      <a href="{{ '/lecture/' | relative_url }}?slug=${lecture.slug}">${lecture.title}</a>
+                    </h3>
+                    <span class="lecture-item-date">${dateStr}</span>
+                  </div>
+                  ${lecture.synopsis ? `<p class="lecture-item-synopsis">${lecture.synopsis}</p>` : ''}
+                  <div class="lecture-item-meta">
+                    ${lecture.venue ? `<span class="venue-name">${lecture.venue.name}</span>` : ''}
+                    ${lecture.supercategory ? `<span class="category-badge small" data-category="${lecture.supercategory}">${lecture.supercategory}</span>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Update page title
+    document.title = `${speaker.name} - The Lecture List`;
+  }
+</script>
+
+<style>
+  .speaker-detail {
+    padding: 2rem 0;
+  }
+  
+  .speaker-header {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .speaker-name {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .speaker-title-text {
+    font-size: 1.25rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+  
+  .speaker-url a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .speaker-url a:hover {
+    text-decoration: underline;
+  }
+  
+  .speaker-bio {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+  }
+  
+  .speaker-bio h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .speaker-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #666;
+    font-size: 0.875rem;
+  }
+  
+  .speaker-categories,
+  .speaker-topics {
+    margin-bottom: 2rem;
+  }
+  
+  .speaker-categories h3,
+  .speaker-topics h3 {
+    margin-bottom: 1rem;
+  }
+  
+  .category-list,
+  .topic-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .category-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #007bff;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    text-transform: capitalize;
+  }
+  
+  .category-badge.small {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .topic-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+  
+  .topic-tag:hover {
+    background: #e0e0e0;
+  }
+  
+  .more-topics {
+    color: #666;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+  }
+  
+  .speaker-lectures h2 {
+    margin-bottom: 1.5rem;
+  }
+  
+  .lectures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .lecture-item {
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .lecture-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .lecture-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .lecture-item-title {
+    margin: 0;
+    font-size: 1.25rem;
+    flex: 1;
+  }
+  
+  .lecture-item-title a {
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .lecture-item-title a:hover {
+    color: #007bff;
+  }
+  
+  .lecture-item-date {
+    color: #666;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+  
+  .lecture-item-synopsis {
+    margin: 0.5rem 0;
+    color: #666;
+    line-height: 1.5;
+  }
+  
+  .lecture-item-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 0.75rem;
+  }
+  
+  .venue-name {
+    color: #666;
+    font-size: 0.875rem;
+  }
+  
+  .loading,
+  .error {
+    padding: 2rem;
+    text-align: center;
+    color: #666;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
+  
+  @media (max-width: 768px) {
+    .lecture-item-header {
+      flex-direction: column;
+    }
+    
+    .lecture-item-date {
+      align-self: flex-start;
+    }
+  }
+</style>
+
