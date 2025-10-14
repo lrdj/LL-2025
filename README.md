@@ -92,6 +92,11 @@ A static, client-driven archive of 15,847 public lectures from across the UK (20
 - SEO: jekyll-seo-tag, jekyll-sitemap; RSS via jekyll-feed
 - Responsive design and accessible, semantic markup
 
+#### Location Maps (Lecture pages)
+- The Location box on lecture pages now embeds a small map (Google Maps search iframe) and a "View larger map" link.
+- Zero configuration: uses venue name, city, and postcode to build the query. No API keys or geocoding required.
+- File: `pages/lecture.html` (search iframe + minimal styles).
+
 ### Notes and Roadmap
 
 - Collections for `lectures`, `speakers`, `topics` are configured in `_config.yml` but not used yet. Pages are currently rendered client-side via JSON. You can generate static collections later for improved SEO and shareable URLs.
