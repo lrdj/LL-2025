@@ -53,6 +53,7 @@ exclude:
   - .sass-cache
   - .jekyll-cache
   - README.md
+  - Design_briefing_docs
 
 # Include
 include:
