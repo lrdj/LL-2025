@@ -1,6 +1,6 @@
-# The Lecture List - Jekyll Static Archive
+# The Lecture List — Jekyll Static Archive
 
-A static archive of 15,847 public lectures from across the UK (2003-2018).
+A static, client-driven archive of 15,847 public lectures from across the UK (2003–2018).
 
 ## Quick Start
 
@@ -35,72 +35,87 @@ A static archive of 15,847 public lectures from across the UK (2003-2018).
 ## Project Structure
 
 ```
-├── _config.yml           # Jekyll configuration
-├── _data/                # JSON data files
-│   ├── lectures.json     # 15,847 lectures
-│   ├── speakers.json     # 16,912 speakers
-│   ├── topics.json       # 4,463 topics
-│   ├── institutions.json # 3,459 institutions
-│   └── supercategories.json
-├── _includes/            # Reusable components
+├── _config.yml                # Jekyll configuration (baseurl/url, plugins)
+├── _data/
+│   └── summary.json           # Lightweight counts for footer (Jekyll data)
+├── _includes/                 # Reusable components
 │   ├── header.html
-│   ├── footer.html
-│   └── lecture-card.html
-├── _layouts/             # Page templates
-│   ├── default.html
-│   ├── page.html
-│   └── lecture.html
+│   ├── footer.html            # Uses site.data.summary
+│   └── lecture-card.html      # Unused helper include (references site.data.supercategories)
+├── _layouts/                  # Page templates
+│   ├── default.html           # Global shell, SEO, CSS/JS
+│   ├── page.html              # Wrapper for content pages
+│   └── lecture.html           # Template for future static collections
 ├── assets/
-│   ├── css/
-│   │   └── main.css      # Main stylesheet
-│   ├── js/
-│   │   └── main.js       # Main JavaScript
-│   └── images/
-│       └── supercategories/  # Category images
-├── pages/                # Site pages
-│   ├── browse.html
-│   ├── topics.html
-│   ├── speakers.html
-│   ├── search.html
+│   ├── css/main.css           # Design system, responsive layout
+│   ├── js/main.js             # Nav, minor UI behaviors
+│   ├── images/
+│   │   ├── supercategories/   # 11 category images (JPG)
+│   │   └── sm/                # Per-lecture images (subset)
+│   └── data/                  # Primary data used by pages (JSON)
+│       ├── lectures.json      # Monolithic list of lectures (~28MB)
+│       ├── speakers.json      # Monolithic speakers (~2.2MB)
+│       ├── institutions.json  # Monolithic institutions (~1.1MB)
+│       ├── topics.json        # Topics (~662KB)
+│       ├── summary.json       # Same shape as _data/summary.json (used on homepage)
+│       ├── supercategories.json
+│       ├── lectures_#.json    # Chunked data shards
+│       ├── speakers_#.json    # Chunked data shards
+│       ├── institutions_#.json# Chunked data shards
+│       ├── lectures_index.json      # slug → chunk mapping
+│       ├── speakers_index.json      # slug → chunk mapping
+│       └── institutions_index.json  # slug → chunk mapping
+├── pages/                     # Client-rendered entity and listing pages
+│   ├── browse.html            # Filter/sort lectures client-side
+│   ├── topics.html            # Topic explorer, counts from lectures.json
+│   ├── topic.html             # Topic detail, lectures filtered client-side
+│   ├── speakers.html          # Alphabetical list (from speakers.json)
+│   ├── speaker.html           # Speaker detail (DataLoader + lectures.json)
+│   ├── institution.html       # Institution detail (DataLoader + lectures.json)
+│   ├── search.html            # Pagefind UI with JS fallback
 │   └── about.md
-└── index.html            # Homepage
+├── scripts/
+│   └── merge_data.js          # Node script to merge chunked files → monoliths
+└── index.html                 # Homepage (stats, categories, recents)
 ```
 
 ## Features
 
-### ✅ Implemented
+### Implemented
 
-- **Browse 15,847 lectures** with filtering by category
-- **Search functionality** (Pagefind integration ready)
-- **Topic exploration** across 11 supercategories
-- **Speaker directory** with 16,912 speakers
-- **Responsive design** works on all devices
-- **Fast, static site** hosted on GitHub Pages
+- Browse 15,847 lectures with client-side filtering/sorting (category, date, title)
+- Topic exploration across 11 supercategories with per-topic counts
+- Speaker directory (16,912) with search and A–Z sections
+- Lecture, Speaker, Topic, Institution detail pages rendered client-side
+- Pagefind search UI integration with a JavaScript fallback
+- Baseurl-safe URLs for GitHub Pages project site deployments
+- SEO: jekyll-seo-tag, jekyll-sitemap; RSS via jekyll-feed
+- Responsive design and accessible, semantic markup
 
-### 🔄 To Implement
+### Notes and Roadmap
 
-1. **Search with Pagefind**
-   ```bash
-   # After building the site
-   npx pagefind --source _site
-   ```
+- Collections for `lectures`, `speakers`, `topics` are configured in `_config.yml` but not used yet. Pages are currently rendered client-side via JSON. You can generate static collections later for improved SEO and shareable URLs.
+- Client pages that need global context (e.g., “all lectures for a speaker”) currently fetch the monolithic `assets/data/lectures.json`, which is large (~28MB). Consider per-entity indexes or server-side generation if payload becomes a bottleneck.
 
-2. **Individual lecture pages**
-   - Currently using data files
-   - Can generate collections for better SEO
+## Data Model and Loading
 
-3. **Enhanced images**
-   - Midjourney-generated visuals for categories
-   - Placeholder system in place
+Primary data lives under `assets/data/` and is consumed client-side by pages:
 
-## Data
+- `lectures.json` (~28MB): Full lecture records
+- `speakers.json` (~2.2MB): Speaker records
+- `topics.json` (~662KB): Hierarchical topics with `path`
+- `institutions.json` (~1.1MB): Venues and organizations
+- `summary.json`: Aggregate counts; used by the homepage and footer (also mirrored in `_data/summary.json` for Liquid access)
 
-All data is in `_data/` as JSON files:
+Data is also available in chunked shards with `*_index.json` files mapping `slug → chunk` to enable targeted fetches without loading the entire dataset.
 
-- **lectures.json** (28 MB) - Full lecture records
-- **speakers.json** (2.2 MB) - Speaker information
-- **topics.json** (662 KB) - Hierarchical topics
-- **institutions.json** (1.1 MB) - Venues and organizations
+### DataLoader helper (client-side)
+
+`assets/data/data-loader.js` provides:
+
+- `DataLoader.baseUrl`: Set at runtime to `{{ site.baseurl }}/assets/data` on entity pages
+- `loadLecture(slug)`, `loadSpeaker(slug)`, `loadInstitution(slug)`: Use `*_index.json` to fetch only the shard containing the requested entity
+- `loadAllLectures()`: Fetches `lectures.json` (used on detail pages to gather related lectures)
 
 ### Data Structure
 
@@ -120,90 +135,49 @@ All data is in `_data/` as JSON files:
 
 ## Deployment
 
-### GitHub Pages (Recommended)
+### GitHub Pages (project site)
 
-1. **Push to GitHub**
+1. Push to GitHub:
    ```bash
    git add .
-   git commit -m "Initial site"
+   git commit -m "Publish site"
    git push origin main
    ```
+2. Enable GitHub Pages: Settings → Pages → Branch `main`, Folder `/ (root)`
+3. Wait ~2–5 minutes, then visit: `https://yourusername.github.io/LL-2025/`
 
-2. **Enable GitHub Pages**
-   - Go to repo Settings → Pages
-   - Source: Deploy from branch `main`
-   - Folder: `/ (root)`
+Baseurl is already configured for project site deployment:
 
-3. **Wait for build** (~2-5 minutes)
+```yaml
+baseurl: "/LL-2025"
+url: "https://lrdj.github.io"
+```
 
-4. **Visit your site**
-   ```
-   https://yourusername.github.io/LL-2025/
-   ```
+If you use a custom domain, set `baseurl: ""` and update `url` accordingly.
 
-### Custom Domain
+## Search
 
-1. Add `CNAME` file with your domain
-2. Configure DNS:
-   ```
-   A     @     185.199.108.153
-   A     @     185.199.109.153
-   A     @     185.199.110.153
-   A     @     185.199.111.153
-   CNAME www   yourusername.github.io
-   ```
+### Pagefind (recommended)
 
-## Search Setup
+`pages/search.html` integrates the Pagefind UI from `/pagefind/` within the built `_site`. To enable:
 
-### Option 1: Pagefind (Recommended)
-
-Pagefind is a static search library that works perfectly with GitHub Pages.
-
-1. **Install Pagefind**
-   ```bash
-   npm install -g pagefind
-   ```
-
-2. **Build your site**
+1. Build the site:
    ```bash
    bundle exec jekyll build
    ```
-
-3. **Index the site**
+2. Generate the index:
    ```bash
    npx pagefind --source _site
+   # or: pagefind --source _site
    ```
-
-4. **Commit the index**
+3. Commit the index directory:
    ```bash
    git add _site/pagefind
    git commit -m "Add search index"
    git push
    ```
 
-**Pros:**
-- Free, open source
-- Works entirely client-side
-- No API keys needed
-- Fast and lightweight
-
-### Option 2: Algolia
-
-For more advanced search features.
-
-1. Sign up at algolia.com (free tier: 10K records)
-2. Install jekyll-algolia plugin
-3. Configure in `_config.yml`
-4. Index with `bundle exec jekyll algolia`
-
-**Pros:**
-- Typo tolerance
-- Advanced filtering
-- Analytics
-
-**Cons:**
-- Requires API key
-- 10K record limit on free tier (you have 15K+)
+The search page auto-detects if Pagefind is unavailable and falls back to a simple client-side search over `assets/data/lectures.json` (limited to basic substring matching, capped to top 20 results).
 
 ## Performance
 
@@ -214,16 +188,9 @@ For more advanced search features.
 
 ### Optimization Tips
 
-1. **Reduce data file size**
-   - Split lectures by year if needed
-   - Use collections instead of data files
-
-2. **Lazy load images**
-   - Add loading="lazy" to images
-   - Use WebP format
-
-3. **Enable caching**
-   - GitHub Pages handles this automatically
+1. Reduce payloads for client pages that currently fetch `lectures.json` by adding per-entity reverse indexes (e.g., speaker → lecture IDs) or by generating static pages via Jekyll collections.
+2. Lazy-load images where used and prefer WebP.
+3. Caching and compression are handled by GitHub Pages/CDN; keep file sizes under GitHub limits (100MB per file).
 
 ## Customization
 
@@ -241,7 +208,7 @@ Edit CSS variables in `assets/css/main.css`:
 
 ### Navigation
 
-Edit `_config.yml`:
+Edit `_config.yml` to add/remove nav items:
 
 ```yaml
 navigation:
@@ -249,6 +216,10 @@ navigation:
     url: /browse/
   - title: Topics
     url: /topics/
+  - title: Speakers
+    url: /speakers/
+  - title: About
+    url: /about/
 ```
 
 ### Content
@@ -262,7 +233,7 @@ navigation:
 ### Build fails on GitHub Pages
 
 - Check `_config.yml` syntax
-- Ensure all plugins are GitHub Pages compatible
+- Ensure plugins are supported (jekyll-feed, jekyll-seo-tag, jekyll-sitemap are compatible)
 - Check file sizes (GitHub has 100MB limit per file)
 
 ### Search not working
@@ -281,9 +252,9 @@ navigation:
 
 This is an archive site, so we're not accepting new lecture submissions. However, contributions to improve the site are welcome:
 
-- Bug fixes
-- Design improvements
-- Performance optimizations
+- Bug fixes and small UX polish
+- Design and accessibility improvements
+- Performance optimizations (data loading, payloads)
 - Documentation updates
 
 ## License
@@ -295,9 +266,23 @@ Code: MIT License
 
 - **Original site:** The Lecture List (2003-2018)
 - **2014 redesign:** Rieko Vining
-- **2025 static archive:** Built with Jekyll
+- **2025 static archive:** Built with Jekyll + client-side JSON
+
+## Implementation Details (Deep Dive)
+
+- Architecture: Jekyll provides templates, layout, and SEO. Most listing and detail pages are rendered client-side by fetching JSON from `assets/data/`. Collections are preconfigured but currently not generating individual HTML files.
+- Homepage: Loads `assets/data/summary.json` for counts and `assets/data/lectures.json` to render recent lectures. Category cards link to `/browse/?category=...`.
+- Browse: Fetches `lectures.json`, supports category filter (via `supercategory`), sorting (date/title), and incremental rendering (“Load more”).
+- Topic Explorer: Fetches `topics.json` and `lectures.json`, computes per-topic counts, and renders topic groups by hierarchy prefix.
+- Entity Pages: `pages/lecture.html`, `pages/speaker.html`, `pages/institution.html` use `DataLoader` to fetch a single shard by slug, then (for speaker/institution) load `lectures.json` to enumerate related lectures.
+- Search: `pages/search.html` integrates Pagefind UI loaded from `_site/pagefind/`. If Pagefind isn’t present, a simple substring search over `lectures.json` is used.
+- Base URL: All Liquid links use `relative_url`. JavaScript fetches and links inject `{{ site.baseurl }}` or use `| relative_url` for compatibility with project site deployment at `/LL-2025/` and custom domains.
+
+Known quirks
+- `_includes/lecture-card.html` references `site.data.supercategories` which is not present in `_data/`. The include is not currently used by pages.
+- Some pages fetch the full `lectures.json` which is large; consider switching to reverse indexes or static pages for scalability.
+
 
 ---
 
 **Questions?** Open an issue on GitHub.
-
