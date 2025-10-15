@@ -5,11 +5,9 @@ layout: default
 <!-- Hero Section -->
 <section class="hero">
   <div class="container">
-    <h1 class="hero-title">The Lecture List</h1>
-    <p class="hero-subtitle">A Curated Archive of Public Lectures</p>
-    <p class="hero-description">
-      Discover talks on science, arts, politics, and more from leading thinkers across the UK (2003-2018)
-    </p>
+
+    {% include home-page-hero.html %}
+
     <div class="hero-search">
       <input type="search" placeholder="Search lectures..." class="search-input">
       <button class="search-button" onclick="window.location.href='{{ '/search/' | relative_url }}'">Search</button>
