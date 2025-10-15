@@ -41,13 +41,21 @@ permalink: /institution/
       // TODO: Could optimize this with an institution->lectures index
       const allLectures = await DataLoader.loadAllLectures();
       
-      const asVenue = allLectures.filter(lecture => 
-        lecture.venue && lecture.venue.id === institution.id
-      );
+      const instId = institution.id;
+      const instSlug = (institution.slug || '').toLowerCase();
+      const asVenue = allLectures.filter(lecture => {
+        const v = lecture.venue;
+        if (!v) return false;
+        const vSlug = (v.slug || '').toLowerCase();
+        return (v.id === instId) || (instSlug && vSlug === instSlug);
+      });
       
-      const asOrganizer = allLectures.filter(lecture => 
-        lecture.organizer && lecture.organizer.id === institution.id
-      );
+      const asOrganizer = allLectures.filter(lecture => {
+        const o = lecture.organizer;
+        if (!o) return false;
+        const oSlug = (o.slug || '').toLowerCase();
+        return (o.id === instId) || (instSlug && oSlug === instSlug);
+      });
       
       // Get all unique lectures (some may be both venue and organizer)
       const lectureIds = new Set();
