@@ -108,21 +108,49 @@ layout: default
     })
     .catch(error => console.error('Error loading summary:', error));
   
-  // Load recent lectures
-  fetch('{{ site.baseurl }}/assets/data/lectures.json')
-    .then(response => response.json())
-    .then(lectures => {
-      const recent = lectures
-        // Use event date if present; fall back to added
-        .sort((a, b) => new Date(b.date || b.added) - new Date(a.date || a.added))
-        .slice(0, 6);
-      
-      renderRecentLectures(recent);
-    })
-    .catch(error => {
-      console.error('Error loading lectures:', error);
-      document.getElementById('recent-lectures').innerHTML = '<p>Error loading lectures.</p>';
-    });
+  // Load recent lectures: prefer small precomputed view_recents.json
+  // Fallback to legacy lectures.json if missing or ?legacy=1 present
+  (function loadRecents() {
+    const params = new URLSearchParams(window.location.search);
+    const forceLegacy = params.get('legacy') === '1';
+
+    if (!forceLegacy) {
+      fetch('{{ site.baseurl }}/assets/data/view_recents.json')
+        .then(resp => (resp.ok ? resp.json() : Promise.reject(new Error('view_recents missing'))))
+        .then(recents => {
+          // Already sorted server-side; just take top 6 to display
+          renderRecentLectures(recents.slice(0, 6));
+        })
+        .catch(() => {
+          // Fallback: legacy path using full lectures.json
+          fetch('{{ site.baseurl }}/assets/data/lectures.json')
+            .then(response => response.json())
+            .then(lectures => {
+              const recent = lectures
+                .sort((a, b) => new Date(b.date || b.added) - new Date(a.date || a.added))
+                .slice(0, 6);
+              renderRecentLectures(recent);
+            })
+            .catch(error => {
+              console.error('Error loading lectures (fallback):', error);
+              document.getElementById('recent-lectures').innerHTML = '<p>Error loading lectures.</p>';
+            });
+        });
+    } else {
+      fetch('{{ site.baseurl }}/assets/data/lectures.json')
+        .then(response => response.json())
+        .then(lectures => {
+          const recent = lectures
+            .sort((a, b) => new Date(b.date || b.added) - new Date(a.date || a.added))
+            .slice(0, 6);
+          renderRecentLectures(recent);
+        })
+        .catch(error => {
+          console.error('Error loading lectures (legacy):', error);
+          document.getElementById('recent-lectures').innerHTML = '<p>Error loading lectures.</p>';
+        });
+    }
+  })();
   
   function renderCategories() {
     const html = categories.map(cat => `
