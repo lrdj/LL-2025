@@ -21,6 +21,10 @@ permalink: /speaker/
   
   async function loadSpeaker(slug) {
     try {
+      // Feature flag: allow legacy behavior via ?legacy=1
+      const params = new URLSearchParams(window.location.search);
+      const forceLegacy = params.get('legacy') === '1';
+
       // Load data-loader helper if not already loaded
       if (typeof DataLoader === 'undefined') {
         await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
@@ -29,7 +33,7 @@ permalink: /speaker/
       if (typeof DataLoader !== 'undefined') {
         DataLoader.baseUrl = '{{ site.baseurl }}/assets/data';
       }
-      
+
       const speaker = await DataLoader.loadSpeaker(slug);
       
       if (!speaker) {
@@ -37,13 +41,27 @@ permalink: /speaker/
         return;
       }
       
-      // Still need to load all lectures to find this speaker's lectures
-      // TODO: Could optimize this with a speaker->lectures index
-      const allLectures = await DataLoader.loadAllLectures();
-      
-      const speakerLectures = allLectures.filter(lecture => 
-        lecture.speakers && lecture.speakers.some(s => s.id === speaker.id)
-      );
+      let speakerLectures = null;
+      if (!forceLegacy) {
+        try {
+          // Optimized path: use speaker -> lectures reverse index
+          const idxResp = await fetch('{{ "/assets/data/index_speaker_lectures.json" | relative_url }}');
+          if (idxResp.ok) {
+            const indexMap = await idxResp.json();
+            const slugs = indexMap[String(speaker.id)] || [];
+            // Load only required lecture chunks
+            speakerLectures = await DataLoader.loadLecturesBySlugs(slugs);
+          }
+        } catch (_) { /* fall through to legacy */ }
+      }
+
+      // Fallback: legacy path using full monolith
+      if (!speakerLectures) {
+        const allLectures = await DataLoader.loadAllLectures();
+        speakerLectures = allLectures.filter(lecture => 
+          lecture.speakers && lecture.speakers.some(s => s.id === speaker.id)
+        );
+      }
       
       renderSpeaker(speaker, speakerLectures);
     } catch (error) {
