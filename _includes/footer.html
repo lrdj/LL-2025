@@ -26,9 +26,9 @@
       <div class="footer-section">
         <h4>Statistics</h4>
         <ul>
-          <li>{{ site.data.summary.total_lectures | number_with_delimiter }} Lectures</li>
-          <li>{{ site.data.summary.total_speakers | number_with_delimiter }} Speakers</li>
-          <li>{{ site.data.summary.total_topics | number_with_delimiter }} Topics</li>
+          <li><span id="footer-lecture-count">…</span> Lectures</li>
+          <li><span id="footer-speaker-count">…</span> Speakers</li>
+          <li><span id="footer-topic-count">…</span> Topics</li>
         </ul>
       </div>
     </div>
@@ -38,4 +38,22 @@
     </div>
   </div>
 </footer>
-
+<script>
+  (function() {
+    const url = '{{ "/assets/data/summary.json" | relative_url }}';
+    fetch(url)
+      .then(function(resp) { return resp.ok ? resp.json() : null; })
+      .then(function(summary) {
+        if (!summary) return;
+        var fmt = function(n){ try { return Number(n).toLocaleString(); } catch(e) { return n; } };
+        var el;
+        el = document.getElementById('footer-lecture-count');
+        if (el && summary.total_lectures != null) el.textContent = fmt(summary.total_lectures);
+        el = document.getElementById('footer-speaker-count');
+        if (el && summary.total_speakers != null) el.textContent = fmt(summary.total_speakers);
+        el = document.getElementById('footer-topic-count');
+        if (el && summary.total_topics != null) el.textContent = fmt(summary.total_topics);
+      })
+      .catch(function() { /* silent fail */ });
+  })();
+  </script>
