@@ -2,11 +2,17 @@
 layout: page
 title: About The Lecture List
 permalink: /about/
+lectures: "15,847"
+speakers: "16,912"
+topics: "4,463"
+institutions: "3,459"
+
+
 ---
 
 ## A living archive of public intellectual life
 
-The Lecture List is a curated archive of **<span id="lecture-count">15,847</span> public lectures** delivered across the United Kingdom between 2003 and 2018.
+The Lecture List is a curated archive of **<span id="lecture-count">{{ page.lectures }}</span> public lectures** delivered across the United Kingdom between 2003 and 2018.
 
 ### What You'll Find Here
 
@@ -23,7 +29,7 @@ This archive preserves talks on:
 
 ### The Speakers
 
-Our archive features **{{ site.data.summary.total_speakers | number_with_delimiter }} speakers**, including:
+Our archive features **{{ page.speakers }} speakers**, including:
 
 - Leading academics and researchers
 - Award-winning authors and artists
@@ -33,7 +39,7 @@ Our archive features **{{ site.data.summary.total_speakers | number_with_delimit
 
 ### Coverage
 
-**{{ site.data.summary.total_institutions | number_with_delimiter }} institutions** hosted these lectures, from major universities to local community centers, representing the breadth of public intellectual engagement across the UK.
+**{{ page.institutions }} institutions** hosted these lectures, from major universities to local community centers, representing the breadth of public intellectual engagement across the UK.
 
 ### About This Archive
 
@@ -42,7 +48,7 @@ This is a **static archive** - a snapshot of lecture listings from 2003-2018. Th
 ### Browse the Archive
 
 - [Browse all lectures]({{ '/browse/' | relative_url }}) - Filter by category, date, or topic
-- [Explore topics]({{ '/topics/' | relative_url }}) - {{ site.data.summary.total_topics | number_with_delimiter }} topics organized by category
+- [Explore topics]({{ '/topics/' | relative_url }}) - {{ page.topics }} topics organized by category
 - [View speakers]({{ '/speakers/' | relative_url }}) - Alphabetical listing of all speakers
 
 ### Technical Details
