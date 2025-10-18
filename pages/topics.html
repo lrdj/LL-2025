@@ -22,7 +22,6 @@ permalink: /topics/
 <script>
 (async function() {
   let allTopics = [];
-  let allLectures = [];
   let filteredTopics = [];
   let currentSupercategory = '';
   
@@ -31,31 +30,44 @@ permalink: /topics/
   const supercategoryTabs = document.getElementById('supercategory-tabs');
   
   try {
-    // Load topics and lectures
-    const [topicsResponse, lecturesResponse, categoriesResponse] = await Promise.all([
+    // Load topics and categories first
+    const [topicsResponse, categoriesResponse] = await Promise.all([
       fetch('{{ "/assets/data/topics.json" | relative_url }}'),
-      fetch('{{ "/assets/data/lectures.json" | relative_url }}'),
       fetch('{{ "/assets/data/supercategories.json" | relative_url }}')
     ]);
     
     allTopics = await topicsResponse.json();
-    allLectures = await lecturesResponse.json();
     const categories = await categoriesResponse.json();
-    
-    // Count lectures per topic
-    const topicCounts = {};
-    allLectures.forEach(lecture => {
-      if (lecture.topics) {
-        lecture.topics.forEach(topic => {
-          topicCounts[topic.id] = (topicCounts[topic.id] || 0) + 1;
-        });
-      }
-    });
-    
-    // Add counts to topics
-    allTopics.forEach(topic => {
-      topic.lectureCount = topicCounts[topic.id] || 0;
-    });
+
+    // Try to load precomputed counts; fallback to computing from lectures.json
+    let counts = null;
+    try {
+      const resp = await fetch('{{ "/assets/data/meta_topic_counts.json" | relative_url }}');
+      if (resp.ok) counts = await resp.json();
+    } catch (_) {}
+
+    if (counts) {
+      // Apply counts without loading the monolith
+      allTopics.forEach(topic => {
+        const key = String(topic.id);
+        topic.lectureCount = counts[key] || 0;
+      });
+    } else {
+      // Fallback: load lectures.json and compute counts client-side
+      const lecturesResponse = await fetch('{{ "/assets/data/lectures.json" | relative_url }}');
+      const allLectures = await lecturesResponse.json();
+      const topicCounts = {};
+      allLectures.forEach(lecture => {
+        if (lecture.topics) {
+          lecture.topics.forEach(topic => {
+            topicCounts[topic.id] = (topicCounts[topic.id] || 0) + 1;
+          });
+        }
+      });
+      allTopics.forEach(topic => {
+        topic.lectureCount = topicCounts[topic.id] || 0;
+      });
+    }
     
     // Build supercategory tabs
     categories.forEach(cat => {
@@ -313,4 +325,3 @@ permalink: /topics/
     color: #dc3545;
   }
 </style>
-
