@@ -36,12 +36,11 @@ A static, client-driven archive of 15,847 public lectures from across the UK (20
 
 ```
 ├── _config.yml                # Jekyll configuration (baseurl/url, plugins)
-├── _data/
-│   └── summary.json           # Lightweight counts for footer (Jekyll data)
+├── _data/                     # Not used in this version (no Liquid data)
 ├── _includes/                 # Reusable components
 │   ├── header.html
-│   ├── footer.html            # Uses site.data.summary
-│   └── lecture-card.html      # Unused helper include (references site.data.supercategories)
+│   ├── footer.html            # Loads counts from assets/data/summary.json (client-side)
+│   └── do-not-use-lecture-card.html # Archived example include (legacy reference to site.data.supercategories)
 ├── _layouts/                  # Page templates
 │   ├── default.html           # Global shell, SEO, CSS/JS
 │   ├── page.html              # Wrapper for content pages
@@ -57,7 +56,7 @@ A static, client-driven archive of 15,847 public lectures from across the UK (20
 │       ├── speakers.json      # Monolithic speakers (~2.2MB)
 │       ├── institutions.json  # Monolithic institutions (~1.1MB)
 │       ├── topics.json        # Topics (~662KB)
-│       ├── summary.json       # Same shape as _data/summary.json (used on homepage)
+│       ├── summary.json       # Used client-side by homepage and footer
 │       ├── supercategories.json
 │       ├── lectures_#.json    # Chunked data shards
 │       ├── speakers_#.json    # Chunked data shards
@@ -110,7 +109,7 @@ Primary data lives under `assets/data/` and is consumed client-side by pages:
 - `speakers.json` (~2.2MB): Speaker records
 - `topics.json` (~662KB): Hierarchical topics with `path`
 - `institutions.json` (~1.1MB): Venues and organizations
-- `summary.json`: Aggregate counts; used by the homepage and footer (also mirrored in `_data/summary.json` for Liquid access)
+- `summary.json`: Aggregate counts; used by the homepage and footer (fetched client-side)
 
 Data is also available in chunked shards with `*_index.json` files mapping `slug → chunk` to enable targeted fetches without loading the entire dataset.
 
@@ -276,7 +275,7 @@ Code: MIT License
 ## Implementation Details (Deep Dive)
 
 - Architecture: Jekyll provides templates, layout, and SEO. Most listing and detail pages are rendered client-side by fetching JSON from `assets/data/`. Collections are preconfigured but currently not generating individual HTML files.
-- Homepage: Loads `assets/data/summary.json` for counts and `assets/data/lectures.json` to render recent lectures. Category cards link to `/browse/?category=...`.
+- Homepage: Loads `assets/data/summary.json` for counts and `assets/data/lectures.json` (currently) to render recent lectures. Category cards link to `/browse/?category=...`.
 - Browse: Fetches `lectures.json`, supports category filter (via `supercategory`), sorting (date/title), and incremental rendering (“Load more”).
 - Topic Explorer: Fetches `topics.json` and `lectures.json`, computes per-topic counts, and renders topic groups by hierarchy prefix.
 - Entity Pages: `pages/lecture.html`, `pages/speaker.html`, `pages/institution.html` use `DataLoader` to fetch a single shard by slug, then (for speaker/institution) load `lectures.json` to enumerate related lectures.
@@ -284,7 +283,7 @@ Code: MIT License
 - Base URL: All Liquid links use `relative_url`. JavaScript fetches and links inject `{{ site.baseurl }}` or use `| relative_url` for compatibility with project site deployment at `/LL-2025/` and custom domains.
 
 Known quirks
-- `_includes/lecture-card.html` references `site.data.supercategories` which is not present in `_data/`. The include is not currently used by pages.
+- `_includes/do-not-use-lecture-card.html` is an archived include that references a legacy `site.data.supercategories`; it is not used by pages.
 - Some pages fetch the full `lectures.json` which is large; consider switching to reverse indexes or static pages for scalability.
 
 

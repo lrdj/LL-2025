@@ -15,13 +15,14 @@
 ```
 jekyll-site/
 ├── _config.yml          ← Jekyll configuration
-├── _data/               ← Your 15,847 lectures + speakers + topics
+├── _data/               ← (unused in this version)
 ├── _layouts/            ← Page templates (default, page, lecture)
 ├── _includes/           ← Reusable components (header, footer, cards)
 ├── assets/
 │   ├── css/main.css     ← Complete design system
 │   ├── js/main.js       ← JavaScript functionality
-│   └── images/supercategories/  ← (copy your Midjourney images here)
+│   ├── data/            ← Primary JSON data (lectures, speakers, topics, institutions, summary)
+│   └── images/supercategories/  ← Category images
 ├── pages/               ← Browse, Topics, Speakers, Search, About
 ├── index.html           ← Homepage
 ├── Gemfile              ← Ruby dependencies
@@ -48,29 +49,28 @@ cd LL-2025
 
 # Copy the Jekyll site files
 cp -r ~/Downloads/jekyll-site/* .
-
-# Your _data folder is already there, so this won't overwrite it
+## Note: Data lives under assets/data in this version
 ```
 
 ### 3. Copy Your Midjourney Images (2 min)
 
 ```bash
 # Copy the 11 supercategory images you generated
-cp ~/path/to/midjourney/images/*.png assets/images/supercategories/
+cp ~/path/to/midjourney/images/* assets/images/supercategories/
 ```
 
 Make sure the filenames match:
-- `science.png`
-- `arts.png`
-- `politics.png`
-- `business.png`
-- `music.png`
-- `religion.png`
-- `academic.png`
-- `sport.png`
-- `society.png`
-- `children.png`
-- `leisure.png`
+- `science.jpg`
+- `arts.jpg`
+- `politics.jpg`
+- `business.jpg`
+- `music.jpg`
+- `religion.jpg`
+- `academic.jpg`
+- `sport.jpg`
+- `society.jpg`
+- `children.jpg`
+- `leisure.jpg`
 
 ### 4. Update Configuration (3 min)
 
@@ -238,4 +238,3 @@ Edit `index.html` - it's all standard HTML and Liquid templates.
 **You're ready to go!** 🚀
 
 The hardest part (data export) is done. Now you have a beautiful, working static site ready to deploy.
-

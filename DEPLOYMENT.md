@@ -23,6 +23,7 @@ cp pages/* /path/to/LL-2025/pages/
 # Assets
 cp -r assets/css /path/to/LL-2025/assets/
 cp -r assets/js /path/to/LL-2025/assets/
+cp -r assets/data /path/to/LL-2025/assets/
 
 # Root files
 cp index.html /path/to/LL-2025/
@@ -32,14 +33,15 @@ cp README.md /path/to/LL-2025/
 #### Option B: Replace Entire Repo Contents
 
 ```bash
-# Backup your existing _data folder
-cp -r /path/to/LL-2025/_data /tmp/backup-data
+# Backup your existing data (JSON)
+cp -r /path/to/LL-2025/assets/data /tmp/backup-data
 
 # Copy everything
 cp -r * /path/to/LL-2025/
 
 # Restore your data
-cp -r /tmp/backup-data/* /path/to/LL-2025/_data/
+mkdir -p /path/to/LL-2025/assets/data
+cp -r /tmp/backup-data/* /path/to/LL-2025/assets/data/
 ```
 
 ### 2. Update _config.yml
@@ -185,8 +187,9 @@ Common issues:
 brew install imagemagick
 
 # Convert to WebP
-for img in assets/images/supercategories/*.png; do
-  cwebp "$img" -o "${img%.png}.webp"
+for img in assets/images/supercategories/*.{jpg,png}; do
+  [ -e "$img" ] || continue
+  cwebp "$img" -o "${img%.*}.webp"
 done
 ```
 
@@ -248,4 +251,3 @@ Once deployed:
 ---
 
 **Need help?** Open an issue on GitHub or check the README.
-
