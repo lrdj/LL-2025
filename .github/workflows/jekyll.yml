@@ -40,6 +40,19 @@ jobs:
           bundler-cache: true
         # Installs Ruby and caches gems between runs
       
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+        # Provides Node.js to run JSON generator scripts
+
+      - name: Generate optimized data
+        run: |
+          node scripts/generate_recents.js
+          node scripts/generate_topic_counts.js
+          node scripts/generate_reverse_indexes.js
+        # Produces view_recents.json, meta_topic_counts.json, and index_*_lectures.json
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4

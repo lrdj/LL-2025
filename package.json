@@ -1,0 +1,16 @@
+{
+  "name": "ll-2025-jekyll",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Local helper scripts for generating optimized JSON artifacts.",
+  "scripts": {
+    "generate:recents": "node scripts/generate_recents.js",
+    "generate:topic-counts": "node scripts/generate_topic_counts.js",
+    "generate:reverse-indexes": "node scripts/generate_reverse_indexes.js",
+    "generate:data": "npm run generate:recents && npm run generate:topic-counts && npm run generate:reverse-indexes"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+

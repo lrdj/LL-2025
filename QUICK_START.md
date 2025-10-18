@@ -95,6 +95,24 @@ bundle exec jekyll serve
 # Visit http://localhost:4000
 ```
 
+### 5b. Generate Optimized Data Locally (Optional)
+
+Some pages use small, precomputed JSON files for speed. To regenerate them locally:
+
+```bash
+# Requires Node.js 18+
+npm run generate:data
+
+# This produces:
+# - assets/data/view_recents.json
+# - assets/data/meta_topic_counts.json
+# - assets/data/index_topic_lectures.json
+# - assets/data/index_speaker_lectures.json
+# - assets/data/index_institution_lectures.json
+```
+
+Run this before `jekyll serve` if you’ve updated `assets/data/lectures.json`.
+
 ### 6. Deploy to GitHub Pages (5 min)
 
 ```bash
