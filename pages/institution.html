@@ -21,6 +21,10 @@ permalink: /institution/
   
   async function loadInstitution(slug) {
     try {
+      // Feature flag: allow legacy behavior via ?legacy=1
+      const params = new URLSearchParams(window.location.search);
+      const forceLegacy = params.get('legacy') === '1';
+
       // Load data-loader helper if not already loaded
       if (typeof DataLoader === 'undefined') {
         await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
@@ -37,49 +41,81 @@ permalink: /institution/
         return;
       }
       
-      // Load lectures to find lectures at this institution (as venue or organizer)
-      // TODO: Could optimize this with an institution->lectures index
-      const allLectures = await DataLoader.loadAllLectures();
-      
       const instId = institution.id;
       const instSlug = (institution.slug || '').toLowerCase();
-      const asVenue = allLectures.filter(lecture => {
-        const v = lecture.venue;
-        if (!v) return false;
-        const vSlug = (v.slug || '').toLowerCase();
-        return (v.id === instId) || (instSlug && vSlug === instSlug);
-      });
-      
-      const asOrganizer = allLectures.filter(lecture => {
-        const o = lecture.organizer;
-        if (!o) return false;
-        const oSlug = (o.slug || '').toLowerCase();
-        return (o.id === instId) || (instSlug && oSlug === instSlug);
-      });
-      
-      // Get all unique lectures (some may be both venue and organizer)
-      const lectureIds = new Set();
-      const allInstitutionLectures = [];
-      
-      asVenue.forEach(lecture => {
-        if (!lectureIds.has(lecture.id)) {
-          lectureIds.add(lecture.id);
-          allInstitutionLectures.push({ ...lecture, role: 'venue' });
-        }
-      });
-      
-      asOrganizer.forEach(lecture => {
-        if (!lectureIds.has(lecture.id)) {
-          lectureIds.add(lecture.id);
-          allInstitutionLectures.push({ ...lecture, role: 'organizer' });
-        } else {
-          // Update role if already added as venue
-          const existing = allInstitutionLectures.find(l => l.id === lecture.id);
-          if (existing) {
-            existing.role = 'both';
+
+      let allInstitutionLectures = null;
+      let asVenue = [];
+      let asOrganizer = [];
+
+      if (!forceLegacy) {
+        try {
+          // Optimized path: use institution -> lectures reverse index
+          const idxResp = await fetch('{{ "/assets/data/index_institution_lectures.json" | relative_url }}');
+          if (idxResp.ok) {
+            const indexMap = await idxResp.json();
+            const slugs = indexMap[String(instId)] || [];
+            const lectures = await DataLoader.loadLecturesBySlugs(slugs);
+            // Derive roles from the loaded lecture data
+            const lectureIds = new Set();
+            const combined = [];
+            for (const lecture of lectures) {
+              const v = lecture.venue;
+              const o = lecture.organizer;
+              const isVenue = v && ((v.id === instId) || (instSlug && (v.slug || '').toLowerCase() === instSlug));
+              const isOrganizer = o && ((o.id === instId) || (instSlug && (o.slug || '').toLowerCase() === instSlug));
+              const role = isVenue && isOrganizer ? 'both' : isVenue ? 'venue' : isOrganizer ? 'organizer' : null;
+              if (role) {
+                if (!lectureIds.has(lecture.id)) {
+                  lectureIds.add(lecture.id);
+                  combined.push({ ...lecture, role });
+                } else if (role === 'both') {
+                  const existing = combined.find(l => l.id === lecture.id);
+                  if (existing) existing.role = 'both';
+                }
+              }
+            }
+            allInstitutionLectures = combined;
+            asVenue = combined.filter(l => l.role === 'venue' || l.role === 'both');
+            asOrganizer = combined.filter(l => l.role === 'organizer' || l.role === 'both');
           }
-        }
-      });
+        } catch (_) { /* fall through to legacy */ }
+      }
+
+      // Fallback: legacy monolith filtering
+      if (!allInstitutionLectures) {
+        const allLectures = await DataLoader.loadAllLectures();
+        asVenue = allLectures.filter(lecture => {
+          const v = lecture.venue;
+          if (!v) return false;
+          const vSlug = (v.slug || '').toLowerCase();
+          return (v.id === instId) || (instSlug && vSlug === instSlug);
+        });
+        asOrganizer = allLectures.filter(lecture => {
+          const o = lecture.organizer;
+          if (!o) return false;
+          const oSlug = (o.slug || '').toLowerCase();
+          return (o.id === instId) || (instSlug && oSlug === instSlug);
+        });
+        const lectureIds = new Set();
+        const combined = [];
+        asVenue.forEach(lecture => {
+          if (!lectureIds.has(lecture.id)) {
+            lectureIds.add(lecture.id);
+            combined.push({ ...lecture, role: 'venue' });
+          }
+        });
+        asOrganizer.forEach(lecture => {
+          if (!lectureIds.has(lecture.id)) {
+            lectureIds.add(lecture.id);
+            combined.push({ ...lecture, role: 'organizer' });
+          } else {
+            const existing = combined.find(l => l.id === lecture.id);
+            if (existing) existing.role = 'both';
+          }
+        });
+        allInstitutionLectures = combined;
+      }
       
       renderInstitution(institution, allInstitutionLectures, asVenue.length, asOrganizer.length);
     } catch (error) {
