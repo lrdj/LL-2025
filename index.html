@@ -178,6 +178,7 @@ layout: default
       return `
         <div class="lecture-card">
           <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
+            ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.jpg" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
             <span class="lecture-card-category">${lecture.supercategory}</span>
           </div>
           <div class="lecture-card-content">
@@ -202,5 +203,19 @@ layout: default
 <style>
 .recent-lectures {
   padding: var(--spacing-xxl) 0;
+}
+
+/* Recent lecture card image with gradient fallback */
+.lecture-card-image {
+  position: relative;
+  height: 140px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+.lecture-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 </style>

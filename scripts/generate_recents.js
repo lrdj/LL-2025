@@ -31,6 +31,7 @@ function toRecentShape(l) {
     title: l.title,
     date: l.date || null,
     added: l.added || null,
+    image_id: l.image_id || null,
     supercategory: l.supercategory || null,
     // Keep only speaker names; homepage only needs names and count
     speakers: Array.isArray(l.speakers)
@@ -67,4 +68,3 @@ if (require.main === module) {
     process.exit(1);
   }
 }
-
