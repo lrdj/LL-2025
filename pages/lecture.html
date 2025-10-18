@@ -77,12 +77,12 @@ permalink: /lecture/
     
     // Build venue HTML
     const venueHTML = lecture.venue
-      ? `<a href="{{ '/institution/' | relative_url }}?slug=${lecture.venue.slug}" class="venue-link">${lecture.venue.name}</a>${lecture.venue.city ? ', ' + lecture.venue.city : ''}`
+      ? `<a href="{{ '/institution/' | relative_url }}?id=${lecture.venue.id}&slug=${lecture.venue.slug}" class="venue-link">${lecture.venue.name}</a>${lecture.venue.city ? ', ' + lecture.venue.city : ''}`
       : 'Venue TBA';
     
     // Build organizer HTML
     const organizerHTML = lecture.organizer
-      ? `<a href="{{ '/institution/' | relative_url }}?slug=${lecture.organizer.slug}" class="organizer-link">${lecture.organizer.name}</a>`
+      ? `<a href="{{ '/institution/' | relative_url }}?id=${lecture.organizer.id}&slug=${lecture.organizer.slug}" class="organizer-link">${lecture.organizer.name}</a>`
       : '';
     
     // Build additional dates HTML

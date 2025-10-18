@@ -141,7 +141,7 @@ permalink: /browse/
       
       // Format venue
       const venue = lecture.venue 
-        ? `<a href="{{ '/institution/' | relative_url }}?slug=${lecture.venue.slug}" class="venue-link">${lecture.venue.name}</a>`
+        ? `<a href="{{ '/institution/' | relative_url }}?id=${lecture.venue.id}&slug=${lecture.venue.slug}" class="venue-link">${lecture.venue.name}</a>`
         : '';
       
       return `
@@ -356,4 +356,3 @@ permalink: /browse/
     background: #0056b3;
   }
 </style>
-

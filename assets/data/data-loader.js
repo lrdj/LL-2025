@@ -61,6 +61,16 @@ const DataLoader = {
     const chunk = await this.loadChunk('institutions', chunkId);
     return chunk.find(item => item.slug === slug);
   },
+
+  // Load institution by numeric id (uses monolith)
+  async loadInstitutionById(id) {
+    const response = await fetch(`${this.baseUrl}/institutions.json`);
+    const all = await response.json();
+    for (const inst of all) {
+      if (inst && inst.id === id) return inst;
+    }
+    throw new Error(`Institution not found by id: ${id}`);
+  },
   
   // Load all lectures (for browse/search - still large!)
   async loadAllLectures() {

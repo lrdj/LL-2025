@@ -187,7 +187,7 @@ permalink: /topic/
                   ` : ''}
                   ${lecture.synopsis ? `<p class="lecture-item-synopsis">${lecture.synopsis}</p>` : ''}
                   <div class="lecture-item-meta">
-                    ${lecture.venue ? `<span class="venue-name"><a href="{{ '/institution/' | relative_url }}?slug=${lecture.venue.slug}">${lecture.venue.name}</a></span>` : ''}
+                    ${lecture.venue ? `<span class=\"venue-name\"><a href=\"{{ '/institution/' | relative_url }}?id=${lecture.venue.id}&slug=${lecture.venue.slug}\">${lecture.venue.name}</a></span>` : ''}
                     ${lecture.supercategory ? `<span class="category-badge" data-category="${lecture.supercategory}">${lecture.supercategory}</span>` : ''}
                   </div>
                 </div>

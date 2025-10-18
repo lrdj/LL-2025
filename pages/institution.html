@@ -12,14 +12,15 @@ permalink: /institution/
   // Get institution slug from URL query parameter
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
+  const instIdParam = parseInt(urlParams.get('id'));
   
-  if (!slug) {
+  if (!slug && !instIdParam) {
     document.getElementById('institution-container').innerHTML = '<div class="error">No institution specified</div>';
   } else {
-    loadInstitution(slug);
+    loadInstitution(slug, instIdParam);
   }
   
-  async function loadInstitution(slug) {
+  async function loadInstitution(slug, instIdParam) {
     try {
       // Feature flag: allow legacy behavior via ?legacy=1
       const params = new URLSearchParams(window.location.search);
@@ -34,7 +35,9 @@ permalink: /institution/
         DataLoader.baseUrl = '{{ site.baseurl }}/assets/data';
       }
       
-      const institution = await DataLoader.loadInstitution(slug);
+      const institution = instIdParam
+        ? await DataLoader.loadInstitutionById(instIdParam)
+        : await DataLoader.loadInstitution(slug);
       
       if (!institution) {
         document.getElementById('institution-container').innerHTML = '<div class="error">Institution not found</div>';
