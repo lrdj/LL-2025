@@ -21,24 +21,48 @@ permalink: /topic/
   
   async function loadTopic(topicId) {
     try {
+      // Feature flag: allow legacy behavior via ?legacy=1
+      const params = new URLSearchParams(window.location.search);
+      const forceLegacy = params.get('legacy') === '1';
+
       // Load topic data
       const topicsResponse = await fetch('{{ "/assets/data/topics.json" | relative_url }}');
       const topics = await topicsResponse.json();
-      
       const topic = topics.find(t => t.id === topicId);
-      
       if (!topic) {
         document.getElementById('topic-container').innerHTML = '<div class="error">Topic not found</div>';
         return;
       }
-      
-      // Load lectures for this topic
-      const lecturesResponse = await fetch('{{ "/assets/data/lectures.json" | relative_url }}');
-      const allLectures = await lecturesResponse.json();
-      
-      const topicLectures = allLectures.filter(lecture => 
-        lecture.topics && lecture.topics.some(t => t.id === topicId)
-      );
+
+      let topicLectures = null;
+      if (!forceLegacy) {
+        try {
+          // Try optimized path: reverse index + chunked loads
+          const idxResp = await fetch('{{ "/assets/data/index_topic_lectures.json" | relative_url }}');
+          if (idxResp.ok) {
+            const indexMap = await idxResp.json();
+            const slugs = indexMap[String(topicId)] || [];
+
+            // Ensure DataLoader is present and configured
+            if (typeof DataLoader === 'undefined') {
+              await loadScript('{{ "/assets/data/data-loader.js" | relative_url }}');
+            }
+            if (typeof DataLoader !== 'undefined') {
+              DataLoader.baseUrl = '{{ site.baseurl }}/assets/data';
+            }
+            topicLectures = await DataLoader.loadLecturesBySlugs(slugs);
+          }
+        } catch (_) { /* fall through to legacy */ }
+      }
+
+      // Fallback: legacy path using full monolith
+      if (!topicLectures) {
+        const lecturesResponse = await fetch('{{ "/assets/data/lectures.json" | relative_url }}');
+        const allLectures = await lecturesResponse.json();
+        topicLectures = allLectures.filter(lecture => 
+          lecture.topics && lecture.topics.some(t => t.id === topicId)
+        );
+      }
       
       // Find related topics (same path prefix)
       const pathPrefix = topic.path.split('/').slice(0, -1).join('/');
@@ -388,4 +412,3 @@ permalink: /topic/
     }
   }
 </style>
-

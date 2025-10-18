@@ -3,6 +3,32 @@
 const DataLoader = {
   baseUrl: '/assets/data',
   
+  // Load multiple lectures by slug, fetching only necessary chunks
+  async loadLecturesBySlugs(slugs) {
+    if (!Array.isArray(slugs) || slugs.length === 0) return [];
+    const index = await this.loadIndex('lectures');
+    // Map slugs -> chunk ids, collect unique chunks
+    const chunkMap = new Map();
+    for (const slug of slugs) {
+      const chunkId = index[slug];
+      if (chunkId === undefined) continue;
+      if (!chunkMap.has(chunkId)) chunkMap.set(chunkId, []);
+      chunkMap.get(chunkId).push(slug);
+    }
+    const results = [];
+    for (const [chunkId, wants] of chunkMap.entries()) {
+      const chunk = await this.loadChunk('lectures', chunkId);
+      // Filter only desired slugs in this chunk
+      const set = new Set(wants);
+      for (const item of chunk) {
+        if (set.has(item.slug)) results.push(item);
+      }
+    }
+    // Keep original order of requested slugs
+    const bySlug = new Map(results.map(r => [r.slug, r]));
+    return slugs.map(s => bySlug.get(s)).filter(Boolean);
+  },
+  
   // Load lecture by slug
   async loadLecture(slug) {
     const index = await this.loadIndex('lectures');
