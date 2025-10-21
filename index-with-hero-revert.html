@@ -2,6 +2,43 @@
 layout: default
 ---
 
+<!-- Hero Section -->
+<section class="hero">
+  <div class="container">
+
+    {% include home-page-hero.html %}
+
+    <div class="hero-search">
+      <input type="search" placeholder="Search lectures..." class="search-input">
+      <button class="search-button" onclick="window.location.href='{{ '/search/' | relative_url }}'">Search</button>
+    </div>
+  </div>
+</section>
+
+<!-- Statistics -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat">
+        <div class="stat-number" id="lecture-count">15,847</div>
+        <div class="stat-label">Lectures</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="speaker-count">16,912</div>
+        <div class="stat-label">Speakers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="topic-count">4,463</div>
+        <div class="stat-label">Topics</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="institution-count">3,459</div>
+        <div class="stat-label">Institutions</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Highlights: Editor's Pick / Today / This Week -->
 <section class="highlights">
   <div class="container">
