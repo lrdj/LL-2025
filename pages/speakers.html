@@ -24,92 +24,11 @@ permalink: /speakers/
 </div>
 
 <script>
-// Load and display speakers
-(function() {
-  let allSpeakers = [];
-  
-  const searchInput = document.getElementById('speaker-search');
-  const speakersList = document.getElementById('speakers-list');
-  const speakerCount = document.getElementById('speaker-count');
-  
-  // Load speakers from JSON
-  fetch('{{ site.baseurl }}/assets/data/speakers.json')
-    .then(response => response.json())
-    .then(speakers => {
-      allSpeakers = speakers.sort((a, b) => a.name.localeCompare(b.name));
-      speakerCount.textContent = `Browse ${speakers.length.toLocaleString()} speakers who have given lectures in our archive.`;
-      renderSpeakers(allSpeakers);
-    })
-    .catch(error => {
-      console.error('Error loading speakers:', error);
-      speakersList.innerHTML = '<p>Error loading speakers. Please refresh the page.</p>';
-    });
-  
-  function renderSpeakers(speakers) {
-    // Group by first letter
-    const grouped = speakers.reduce((acc, speaker) => {
-      const letter = speaker.name.charAt(0).toUpperCase();
-      if (!acc[letter]) acc[letter] = [];
-      acc[letter].push(speaker);
-      return acc;
-    }, {});
-    
-    const html = Object.keys(grouped).sort().map(letter => {
-      const speakersInGroup = grouped[letter];
-      return `
-        <section class="speaker-group" id="${letter}">
-          <h2 class="speaker-group-letter">${letter}</h2>
-          <div class="speaker-items">
-            ${speakersInGroup.map(speaker => `
-              <div class="speaker-item">
-                <h3 class="speaker-name">
-                  <a href="{{ '/speaker/' | relative_url }}?slug=${speaker.slug}">${speaker.name}</a>
-                </h3>
-                ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
-              </div>
-            `).join('')}
-          </div>
-        </section>
-      `;
-    }).join('');
-    
-    speakersList.innerHTML = html;
-  }
-  
-  // Search functionality
-  searchInput.addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
-    
-    if (!query) {
-      renderSpeakers(allSpeakers);
-      return;
-    }
-    
-    const filtered = allSpeakers.filter(s => 
-      s.name.toLowerCase().includes(query) ||
-      (s.bio && s.bio.toLowerCase().includes(query))
-    );
-    
-    if (filtered.length === 0) {
-      speakersList.innerHTML = '<p>No speakers found matching your search.</p>';
-      return;
-    }
-    
-    speakersList.innerHTML = `
-      <div class="speaker-items">
-        ${filtered.map(speaker => `
-          <div class="speaker-item">
-            <h3 class="speaker-name">
-              <a href="{{ '/speaker/' | relative_url }}?slug=${speaker.slug}">${speaker.name}</a>
-            </h3>
-            ${speaker.bio ? `<p class="speaker-bio-preview">${speaker.bio.substring(0, 120)}...</p>` : ''}
-          </div>
-        `).join('')}
-      </div>
-    `;
-  });
-})();
+  // Bootstrap for external JS
+  window.__BASEURL__ = "{{ site.baseurl }}";
 </script>
+<script src="{{ '/assets/js/utils.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/speakers.js' | relative_url }}"></script>
 
 <style>
 .speakers-intro {
