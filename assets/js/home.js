@@ -1,18 +1,8 @@
 // Robust homepage logic with optional sections and safe DOM guards
 (function () {
-  const baseurl = (window.__BASEURL__ || '').replace(/\/$/, '');
   const demoNow = (window.__DEMO_NOW__ || '').trim();
-
-  // Safe DOM helpers
-  function byId(id) { return document.getElementById(id); }
-  function setHTML(id, html) { const el = byId(id); if (el) el.innerHTML = html; }
-  function setText(id, text) { const el = byId(id); if (el) el.textContent = text; }
-  function onReady(fn) {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
-    else fn();
-  }
-
-  function rel(path) { return baseurl + path; }
+  const U = window.__LL__ || {};
+  const { onReady = (fn)=>document.addEventListener('DOMContentLoaded', fn), byId = (id)=>document.getElementById(id), setHTML = (id,html)=>{ const el=document.getElementById(id); if (el) el.innerHTML=html; }, setText = (id,txt)=>{ const el=document.getElementById(id); if (el) el.textContent = txt; }, rel = (p)=> (window.__BASEURL__||'').replace(/\/$/,'') + p } = U;
 
   onReady(() => {
     initCategoriesAndStats();
@@ -309,4 +299,3 @@
     });
   }
 })();
-

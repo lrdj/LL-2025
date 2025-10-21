@@ -12,8 +12,8 @@
       else fn();
     },
     fetchJSON(path) { return fetch(U.rel(path)).then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); },
+    loadScript(src) { return new Promise((resolve, reject) => { const s=document.createElement('script'); s.src = src; s.onload=resolve; s.onerror=reject; document.head.appendChild(s); }); }
   };
 
   window.__LL__ = U;
 })();
-

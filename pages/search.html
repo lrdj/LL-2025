@@ -100,74 +100,8 @@ permalink: /search/
 <!-- Pagefind Search Integration -->
 <link href="{{ site.baseurl }}/pagefind/pagefind-ui.css" rel="stylesheet">
 <script src="{{ site.baseurl }}/pagefind/pagefind-ui.js"></script>
-
 <script>
-// Initialize Pagefind UI
-window.addEventListener('DOMContentLoaded', (event) => {
-  new PagefindUI({ 
-    element: "#pagefind-search",
-    showSubResults: true,
-    showImages: false,
-    excerptLength: 30
-  });
-});
+  window.__BASEURL__ = "{{ site.baseurl }}";
 </script>
-
-<!-- Fallback: Simple client-side search if Pagefind not available -->
-<script>
-(function() {
-  // Check if Pagefind loaded, otherwise use simple search
-  setTimeout(function() {
-    if (typeof PagefindUI === 'undefined') {
-      console.log('Pagefind not available, using simple search');
-      initSimpleSearch();
-    }
-  }, 1000);
-  
-  function initSimpleSearch() {
-    const searchInput = document.getElementById('pagefind-search');
-    const resultsContainer = document.getElementById('search-results');
-    const emptyState = document.getElementById('search-empty');
-    
-    // Load lectures data
-    fetch('{{ site.baseurl }}/assets/data/lectures.json')
-      .then(response => response.json())
-      .then(lectures => {
-        searchInput.addEventListener('input', function() {
-          const query = this.value.toLowerCase().trim();
-          
-          if (query.length < 2) {
-            resultsContainer.innerHTML = '';
-            emptyState.style.display = 'none';
-            return;
-          }
-          
-          const results = lectures.filter(lecture => {
-            const searchText = `${lecture.title} ${lecture.synopsis} ${lecture.keywords}`.toLowerCase();
-            return searchText.includes(query);
-          }).slice(0, 20);
-          
-          if (results.length === 0) {
-            resultsContainer.innerHTML = '';
-            emptyState.style.display = 'block';
-            return;
-          }
-          
-          emptyState.style.display = 'none';
-          resultsContainer.innerHTML = results.map(lecture => {
-            const speakers = lecture.speakers.map(s => s.name).join(', ');
-            return `
-              <div class="search-result">
-                <h3 class="search-result-title">
-              <a href="{{ '/lecture/' | relative_url }}?slug=${lecture.slug}">${lecture.title}</a>
-                </h3>
-                ${speakers ? `<p class="search-result-meta">${speakers}</p>` : ''}
-                ${lecture.synopsis ? `<p class="search-result-excerpt">${lecture.synopsis.substring(0, 200)}...</p>` : ''}
-              </div>
-            `;
-          }).join('');
-        });
-      });
-  }
-})();
-</script>
+<script src="{{ '/assets/js/utils.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/search.js' | relative_url }}"></script>
