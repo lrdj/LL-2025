@@ -170,7 +170,7 @@ layout: default
     const html = categories.map(cat => `
       <a href="{{ site.baseurl }}/browse/?category=${cat.slug}" class="category-card">
         <div class="category-image">
-          <img src="{{ site.baseurl }}/assets/images/supercategories/${cat.slug}.jpg" 
+          <img src="{{ site.baseurl }}/assets/images/supercategories/${cat.slug}.webp" 
                alt="${cat.name}"
                onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, var(--color-${cat.slug}), var(--color-${cat.slug}-light))';">
         </div>
@@ -192,7 +192,7 @@ layout: default
       return `
         <div class="lecture-card">
           <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
-            ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.jpg" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
+            ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.webp" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
             <span class="lecture-card-category">${lecture.supercategory}</span>
           </div>
           <div class="lecture-card-content">
@@ -306,7 +306,7 @@ layout: default
     return `
       <div class="lecture-card">
         <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
-          ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.jpg" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
+          ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.webp" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
           <span class="lecture-card-category">${lecture.supercategory}</span>
         </div>
         <div class="lecture-card-content">

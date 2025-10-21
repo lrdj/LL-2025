@@ -109,8 +109,8 @@ permalink: /lecture/
     
     // Get image URL
     const imageUrl = lecture.image_id 
-      ? `{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.jpg`
-      : `{{ '/assets/images/supercategories/' | relative_url }}${lecture.supercategory}.jpg`;
+      ? `{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.webp`
+      : `{{ '/assets/images/supercategories/' | relative_url }}${lecture.supercategory}.webp`;
     
     container.innerHTML = `
       <div class="container">
