@@ -1,9 +1,8 @@
 {
-  "editors_pick": {
-    "slug": null,
-    "blurb": null
-  },
-  "today": null,
-  "this_week": []
+    "editors_pick": {
+      "slug": "b370ea2b5108a43b",
+      "blurb": "Staff pick: sharp, timely and fun."
+    },
+    "today": "fd8145fdb0ba39d8",
+    "this_week": ["03cad80589328387", "870a45e40824a93c", "107cc34993f95ebd"]
 }
-
