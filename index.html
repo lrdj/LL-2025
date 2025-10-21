@@ -2,13 +2,36 @@
 layout: default
 ---
 
+<!-- Statistics -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat">
+        <div class="stat-number" id="lecture-count">15,847</div>
+        <div class="stat-label">Lectures</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="speaker-count">16,912</div>
+        <div class="stat-label">Speakers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="topic-count">4,463</div>
+        <div class="stat-label">Topics</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="institution-count">3,459</div>
+        <div class="stat-label">Institutions</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Highlights: Editor's Pick / Today / This Week -->
 <section class="highlights">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">Highlights</h2>
     </div>
-
     <div id="highlights-grid" class="highlights-grid">
       <p>Loading highlights...</p>
     </div>
@@ -62,14 +85,22 @@ layout: default
     { slug: 'leisure', name: 'Leisure', count: 0 }
   ];
   
+  // Render categories immediately with default counts; will update after summary loads
+  renderCategories();
+  
   // Load summary stats
   fetch('{{ site.baseurl }}/assets/data/summary.json')
     .then(response => response.json())
     .then(summary => {
-      document.getElementById('lecture-count').textContent = summary.total_lectures.toLocaleString();
-      document.getElementById('speaker-count').textContent = summary.total_speakers.toLocaleString();
-      document.getElementById('topic-count').textContent = summary.total_topics.toLocaleString();
-      document.getElementById('institution-count').textContent = summary.total_institutions.toLocaleString();
+      // Stats section is optional; guard in case it's removed from the page
+      const lc = document.getElementById('lecture-count');
+      const sc = document.getElementById('speaker-count');
+      const tc = document.getElementById('topic-count');
+      const ic = document.getElementById('institution-count');
+      if (lc) lc.textContent = summary.total_lectures.toLocaleString();
+      if (sc) sc.textContent = summary.total_speakers.toLocaleString();
+      if (tc) tc.textContent = summary.total_topics.toLocaleString();
+      if (ic) ic.textContent = summary.total_institutions.toLocaleString();
       
 
     // Update category counts
@@ -83,7 +114,11 @@ layout: default
       
       renderCategories();
     })
-    .catch(error => console.error('Error loading summary:', error));
+    .catch(error => {
+      console.error('Error loading summary:', error);
+      // Ensure categories still render even if summary fetch or DOM updates fail
+      renderCategories();
+    });
   
   // Load recent lectures: prefer small precomputed view_recents.json
   // Fallback to legacy lectures.json if missing or ?legacy=1 present
