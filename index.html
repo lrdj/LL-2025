@@ -39,6 +39,20 @@ layout: default
   </div>
 </section>
 
+<!-- Highlights: Editor's Pick / Today / This Week -->
+<section class="highlights">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Highlights</h2>
+    </div>
+
+    <div id="highlights-grid" class="highlights-grid">
+      <p>Loading highlights...</p>
+    </div>
+  </div>
+  
+</section>
+
 <!-- Supercategories -->
 <section class="supercategories">
   <div class="container">
@@ -198,7 +212,195 @@ layout: default
     document.getElementById('recent-lectures').innerHTML = html;
   }
 })();
+
+// Load and render homepage highlights (Editor's Pick, Today, This Week)
+(function() {
+  const highlightsGrid = document.getElementById('highlights-grid');
+  if (!highlightsGrid) return;
+
+  const siteDemoNow = "{{ site.demo_now | default: '' }}".trim();
+
+  // Resolve the demo clock: URL param `now=YYYY-MM-DD` > site.demo_now > real now
+  function getNowDate() {
+    const params = new URLSearchParams(window.location.search);
+    const override = params.get('now');
+    const pick = (override && /^\d{4}-\d{2}-\d{2}$/.test(override)) ? override
+                : (siteDemoNow && /^\d{4}-\d{2}-\d{2}$/.test(siteDemoNow)) ? siteDemoNow
+                : null;
+    return pick ? new Date(pick + 'T00:00:00') : new Date();
+  }
+
+  function parseDate(iso) {
+    if (!iso) return null;
+    // Ensure UTC-like parsing to avoid TZ shifts
+    const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(iso);
+    if (!m) return null;
+    const y = +m[1], mo = +m[2]-1, d = +m[3];
+    const dt = new Date(Date.UTC(y, mo, d));
+    return { y, m: mo+1, d, dt };
+  }
+
+  function dayOfYear(m, d, y) {
+    // y optional: use non-leap assumption unless validating Feb 29
+    const yy = y || 2001; // non-leap
+    const date = new Date(Date.UTC(yy, m-1, d));
+    const start = new Date(Date.UTC(yy, 0, 1));
+    return Math.floor((date - start) / 86400000) + 1;
+  }
+
+  function weekWindow(now) {
+    const dow = now.getUTCDay(); // 0=Sun
+    const diffToMon = (dow + 6) % 7; // days since Monday
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diffToMon));
+    const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 6));
+    return { start, end };
+  }
+
+  function inWeekByMonthDay(lectureMD, window, year) {
+    // Map the lecture month/day into the current year and test in-range
+    const mapped = new Date(Date.UTC(year, lectureMD.m-1, lectureMD.d));
+    return mapped >= window.start && mapped <= window.end;
+  }
+
+  function pickToday(lectures, now, curatedSlug) {
+    const nowMD = { m: now.getUTCMonth() + 1, d: now.getUTCDate() };
+    if (curatedSlug && lectures.bySlug[curatedSlug]) return lectures.bySlug[curatedSlug];
+
+    const sameMD = lectures.list
+      .filter(l => l.dateParts && l.dateParts.m === nowMD.m && l.dateParts.d === nowMD.d)
+      .sort((a,b) => (b.dateParts?.y||0) - (a.dateParts?.y||0));
+    if (sameMD.length) return sameMD[0];
+
+    // Nearest month/day by absolute day-of-year distance (wrap-aware)
+    const target = dayOfYear(nowMD.m, nowMD.d);
+    let best = null, bestDist = Infinity;
+    for (const l of lectures.list) {
+      if (!l.dateParts) continue;
+      const doy = dayOfYear(l.dateParts.m, l.dateParts.d);
+      const dist = Math.min(Math.abs(doy - target), 365 - Math.abs(doy - target));
+      if (dist < bestDist) { bestDist = dist; best = l; }
+    }
+    return best || lectures.list[0];
+  }
+
+  function pickThisWeek(lectures, now, curatedSlugs) {
+    if (Array.isArray(curatedSlugs) && curatedSlugs.length) {
+      const arr = curatedSlugs.map(s => lectures.bySlug[s]).filter(Boolean);
+      if (arr.length) return arr.slice(0, 3);
+    }
+    const ww = weekWindow(now);
+    const year = now.getUTCFullYear();
+    const inWeek = lectures.list
+      .filter(l => l.dateParts && inWeekByMonthDay(l.dateParts, ww, year))
+      .sort((a,b) => (b.dateParts?.y||0) - (a.dateParts?.y||0));
+    if (inWeek.length) return inWeek.slice(0, 3);
+    // Fallback: pick top 3 most recent by actual date
+    const dated = lectures.list.filter(l => l.dateParts).sort((a,b) => b.dateParts.dt - a.dateParts.dt);
+    return dated.slice(0, 3);
+  }
+
+  function renderLectureCard(lecture) {
+    const dateStr = lecture.dateParts?.dt ? new Date(lecture.dateParts.dt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const speakers = (lecture.speakers || []).slice(0,2).map(s => s.name).join(', ');
+    const moreCount = (lecture.speakers || []).length > 2 ? ` +${(lecture.speakers||[]).length - 2}` : '';
+    return `
+      <div class="lecture-card">
+        <div class="lecture-card-image" style="background: linear-gradient(135deg, var(--color-${lecture.supercategory}), var(--color-${lecture.supercategory}-light));">
+          ${lecture.image_id ? `<img src="{{ '/assets/images/sm/' | relative_url }}${lecture.image_id}.jpg" alt="${lecture.title}" onerror="this.style.display='none'">` : ''}
+          <span class="lecture-card-category">${lecture.supercategory}</span>
+        </div>
+        <div class="lecture-card-content">
+          <h3 class="lecture-card-title"><a href="{{ '/lecture/' | relative_url }}?slug=${lecture.slug}">${lecture.title}</a></h3>
+          ${speakers ? `<div class="lecture-card-speakers">${speakers}${moreCount}</div>` : ''}
+          ${lecture.synopsis ? `<p class="lecture-card-synopsis">${lecture.synopsis.substring(0, 120)}...</p>` : ''}
+          <div class="lecture-card-meta"><span>${dateStr}</span></div>
+        </div>
+      </div>`;
+  }
+
+  function renderWeekList(lectures) {
+    const items = lectures.map(l => `
+      <li>
+        <a href="{{ '/lecture/' | relative_url }}?slug=${l.slug}">${l.title}</a>
+        <span class="week-item-meta">${l.dateParts ? new Date(l.dateParts.dt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
+      </li>
+    `).join('');
+    return `
+      <div class="week-card">
+        <ul class="week-list">${items}</ul>
+      </div>
+    `;
+  }
+
+  Promise.all([
+    fetch('{{ site.baseurl }}/assets/data/lectures.json').then(r => r.json()),
+    fetch('{{ site.baseurl }}/assets/data/home_highlights.json').then(r => r.json()).catch(() => ({ }))
+  ])
+  .then(([lectures, highlights]) => {
+    const list = lectures.map(l => ({
+      ...l,
+      dateParts: parseDate(l.date || '')
+    }));
+    const bySlug = Object.fromEntries(list.map(l => [l.slug, l]));
+    const now = getNowDate();
+
+    const editorsPick = (highlights.editors_pick && highlights.editors_pick.slug && bySlug[highlights.editors_pick.slug])
+      ? bySlug[highlights.editors_pick.slug]
+      : list.filter(l => l.image_id && l.dateParts).sort((a,b) => b.dateParts.dt - a.dateParts.dt)[0] || list[0];
+
+    const todayPick = pickToday({ list, bySlug }, now, highlights.today || null);
+    const weekPicks = pickThisWeek({ list, bySlug }, now, highlights.this_week || []);
+
+    const html = `
+      <article class="highlight">
+        <h3 class="highlight-label">Editor's Pick</h3>
+        ${renderLectureCard(editorsPick)}
+        ${highlights.editors_pick && highlights.editors_pick.blurb ? `<p class="highlight-blurb">${highlights.editors_pick.blurb}</p>` : ''}
+      </article>
+      <article class="highlight">
+        <h3 class="highlight-label">Today</h3>
+        ${renderLectureCard(todayPick)}
+      </article>
+      <article class="highlight">
+        <h3 class="highlight-label">This Week</h3>
+        ${renderWeekList(weekPicks)}
+      </article>
+    `;
+    highlightsGrid.innerHTML = html;
+  })
+  .catch(err => {
+    console.error('Error loading highlights:', err);
+    highlightsGrid.innerHTML = '<p>Error loading highlights.</p>';
+  });
+})();
+
 </script>
+
+<style>
+  .highlights { margin: 2rem 0; }
+  .highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .highlight .highlight-label {
+    margin: 0 0 .5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  .highlight .highlight-blurb { margin-top: .5rem; }
+  .week-card { padding: .5rem 0; }
+  .week-list { list-style: none; padding: 0; margin: 0; }
+  .week-list li { display: flex; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid #eee; }
+  .week-list li:last-child { border-bottom: 0; }
+  .week-item-meta { color: var(--text-muted, #666); margin-left: 1rem; }
+  @media (max-width: 900px) {
+    .highlights-grid { grid-template-columns: 1fr; }
+  }
+</style>
 
 <style>
 .recent-lectures {

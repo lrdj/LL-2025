@@ -6,6 +6,11 @@ description: >-
 baseurl: "/LL-2025" # GitHub Pages project site
 url: "https://lrdj.github.io" # GitHub Pages URL
 
+# Demo clock (optional)
+# Set to a date string like "2019-01-15" to freeze homepage selections
+# Leave empty to use the real current date
+demo_now: ""
+
 # Build settings
 markdown: kramdown
 permalink: pretty
@@ -85,4 +90,3 @@ navigation:
     url: /speakers/
   - title: About
     url: /about/
-
