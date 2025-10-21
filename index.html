@@ -351,19 +351,31 @@ layout: default
     const todayPick = pickToday({ list, bySlug }, now, highlights.today || null);
     const weekPicks = pickThisWeek({ list, bySlug }, now, highlights.this_week || []);
 
+    function toISODate(d) {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth()+1).padStart(2,'0');
+      const da = String(d.getUTCDate()).padStart(2,'0');
+      return `${y}-${m}-${da}`;
+    }
+
+    const nowISO = toISODate(now);
+    const mainWeek = weekPicks[0];
+    const weekMoreCount = Math.max(0, weekPicks.length - 1);
+
     const html = `
       <article class="highlight">
         <h3 class="highlight-label">Editor's Pick</h3>
         ${renderLectureCard(editorsPick)}
-        ${highlights.editors_pick && highlights.editors_pick.blurb ? `<p class="highlight-blurb">${highlights.editors_pick.blurb}</p>` : ''}
+        ${highlights.editors_pick && highlights.editors_pick.blurb ? `<p class=\"highlight-blurb\">${highlights.editors_pick.blurb}</p>` : ''}
       </article>
       <article class="highlight">
-        <h3 class="highlight-label">Today</h3>
+        <h3 class="highlight-label">Go Now</h3>
         ${renderLectureCard(todayPick)}
       </article>
       <article class="highlight">
-        <h3 class="highlight-label">This Week</h3>
-        ${renderWeekList(weekPicks)}
+        <h3 class="highlight-label">Go This Week</h3>
+        ${mainWeek ? renderLectureCard(mainWeek) : ''}
+        ${weekMoreCount > 0 ? `<div class=\"week-more\"><a href=\"{{ '/browse/' | relative_url }}?now=${encodeURIComponent(nowISO)}#this-week\">+${weekMoreCount} more this week</a></div>` : ''}
       </article>
     `;
     highlightsGrid.innerHTML = html;
@@ -397,6 +409,9 @@ layout: default
   .week-list li { display: flex; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid #eee; }
   .week-list li:last-child { border-bottom: 0; }
   .week-item-meta { color: var(--text-muted, #666); margin-left: 1rem; }
+  .week-more { margin-top: .5rem; }
+  .week-more a { color: var(--link-color, #0b5fff); text-decoration: none; font-weight: 600; }
+  .week-more a:hover { text-decoration: underline; }
   @media (max-width: 900px) {
     .highlights-grid { grid-template-columns: 1fr; }
   }
