@@ -364,16 +364,16 @@ layout: default
 
     const html = `
       <article class="highlight">
-        <h3 class="highlight-label">Editor's Pick</h3>
+        <h3 class="highlight-label">Editor's pick</h3>
         ${renderLectureCard(editorsPick)}
         ${highlights.editors_pick && highlights.editors_pick.blurb ? `<p class=\"highlight-blurb\">${highlights.editors_pick.blurb}</p>` : ''}
       </article>
       <article class="highlight">
-        <h3 class="highlight-label">Go Now</h3>
+        <h3 class="highlight-label">Go today</h3>
         ${renderLectureCard(todayPick)}
       </article>
       <article class="highlight">
-        <h3 class="highlight-label">Go This Week</h3>
+        <h3 class="highlight-label">Go this week</h3>
         ${mainWeek ? renderLectureCard(mainWeek) : ''}
         ${weekMoreCount > 0 ? `<div class=\"week-more\"><a href=\"{{ '/browse/' | relative_url }}?now=${encodeURIComponent(nowISO)}#this-week\">+${weekMoreCount} more this week</a></div>` : ''}
       </article>
